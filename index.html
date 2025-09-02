@@ -16,13 +16,25 @@
       <div class="card">
         <h2>Identification</h2>
 
+        <label for="nomEmploye">Employé</label>
         <input type="text" id="nomEmploye" placeholder="Nom de l'employé" required />
-        <input type="date" id="dateNaissance" placeholder="Date de naissance" required />
+
+        <label for="dateNaissance">Date de naissance</label>
+        <input type="date" id="dateNaissance" required />
+
+        <label for="qualification">Qualification</label>
         <input type="text" id="qualification" placeholder="Qualification actuelle" required />
-        <input type="date" id="dateEntree" placeholder="Date d'entrée" required />
-        <input type="date" id="dateEvaluation" placeholder="Date de l’évaluation" required />
+
+        <label for="dateEntree">Date d’entrée</label>
+        <input type="date" id="dateEntree" required />
+
+        <label for="dateEvaluation">Date de l’évaluation</label>
+        <input type="date" id="dateEvaluation" required />
+
+        <label for="auteurEvaluation">Auteur</label>
         <input type="text" id="auteurEvaluation" placeholder="Auteur de l’évaluation" required />
 
+        <label for="selectMetier">Métier</label>
         <select id="selectMetier" required>
           <option value="">Sélectionnez un métier</option>
         </select>
@@ -35,16 +47,30 @@
 
       <div class="card" id="ficheComplementaire" style="display:none;">
         <h2>Complément d’évaluation</h2>
+
+        <label for="fonctions">Fonctions exercées</label>
         <textarea id="fonctions" placeholder="Fonctions exercées..." required></textarea>
+
+        <label for="aspirations">Aspirations professionnelles</label>
         <textarea id="aspirations" placeholder="Aspirations professionnelles..." required></textarea>
+
+        <label for="formations">Formations souhaitées</label>
         <textarea id="formations" placeholder="Formations souhaitées..." required></textarea>
+
+        <label for="objectifs">Objectifs d’amélioration</label>
         <textarea id="objectifs" placeholder="Objectifs d'amélioration..." required></textarea>
+
+        <label for="remarques">Remarques</label>
         <textarea id="remarques" placeholder="Remarques..." required></textarea>
+
+        <label for="accidents">Accidents, incidents</label>
         <textarea id="accidents" placeholder="Accidents, incidents..." required></textarea>
       </div>
 
       <div class="card" id="commentaireSection" style="display:none;">
-        <label>Commentaire général</label>
+        <h2>Validation et Commentaires</h2>
+
+        <label for="commentaire">Commentaire général</label>
         <textarea id="commentaire" placeholder="Observations, remarques..." required></textarea>
 
         <div class="checkbox-row">
@@ -63,12 +89,8 @@
   </main>
 
   <!-- Scripts (ordre important) -->
-  <!-- Scripts (ordre important) -->
-<script src="questions.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<script src="script.js"></script>
-
-
-
+  <script src="questions.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="script.js"></script>
 </body>
 </html>
