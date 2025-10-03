@@ -16,24 +16,38 @@
       <div class="card">
         <h2>Identification</h2>
 
-        <label for="nomEmploye">Ouvrier</label>
-        <input type="text" id="nomEmploye" placeholder="Nom de l'employé" required />
+        <!-- 0) N° de chantier + nom -->
+        <label for="chantier">N° de chantier + nom</label>
+        <input type="text" id="chantier" placeholder="Ex : 24031 – Tunnel Albert" required />
 
+        <!-- 1) Ouvrier (liste déroulante) -->
+        <label for="ouvrierSelect">Ouvrier</label>
+        <select id="ouvrierSelect" required>
+          <option value="">Sélectionnez un ouvrier…</option>
+          <!-- rempli par script.js -->
+        </select>
+
+        <!-- 2) Date de naissance -->
         <label for="dateNaissance">Date de naissance</label>
-        <input type="date" id="dateNaissance" required />
+        <input type="date" id="dateNaissance" />
 
+        <!-- 3) Qualification -->
         <label for="qualification">Qualification</label>
-        <input type="text" id="qualification" placeholder="Qualification actuelle" required />
+        <input type="text" id="qualification" placeholder="Qualification actuelle" />
 
+        <!-- 4) Date d’entrée -->
         <label for="dateEntree">Date d’entrée</label>
-        <input type="date" id="dateEntree" required />
+        <input type="date" id="dateEntree" />
 
+        <!-- 5) Date de l’évaluation -->
         <label for="dateEvaluation">Date de l’évaluation</label>
         <input type="date" id="dateEvaluation" required />
 
-        <label for="auteurEvaluation">Auteur</label>
-        <input type="text" id="auteurEvaluation" placeholder="Auteur de l’évaluation" required />
+        <!-- 6) Initial de l’évaluateur -->
+        <label for="initialEval">Initial de l’évaluateur</label>
+        <input type="text" id="initialEval" placeholder="Ex : DH" required />
 
+        <!-- 7) Métier -->
         <label for="selectMetier">Métier</label>
         <select id="selectMetier" required>
           <option value="">Sélectionnez un métier</option>
@@ -43,35 +57,37 @@
       <div class="card" id="questionsContainer" style="display:none;">
         <h2>Critères d’évaluation</h2>
         <div id="questionsList"></div>
+        <!-- Les commentaires par critère s’ouvrent automatiquement si note 4/5 -->
       </div>
 
       <div class="card" id="ficheComplementaire" style="display:none;">
         <h2>Complément d’évaluation</h2>
 
-        <label for="fonctions">Fonctions exercées</label>
-        <textarea id="fonctions" placeholder="Fonctions exercées..." required></textarea>
+        <!-- Tous ces champs deviennent NON obligatoires -->
+        <label for="fonctions">Fonctions exercées sur le chantier</label>
+        <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
 
         <label for="aspirations">Aspirations professionnelles</label>
-        <textarea id="aspirations" placeholder="Aspirations professionnelles..." required></textarea>
+        <textarea id="aspirations" placeholder="Aspirations professionnelles…"></textarea>
 
         <label for="formations">Formations souhaitées</label>
-        <textarea id="formations" placeholder="Formations souhaitées..." required></textarea>
+        <textarea id="formations" placeholder="Formations souhaitées…"></textarea>
 
         <label for="objectifs">Objectifs d’amélioration</label>
-        <textarea id="objectifs" placeholder="Objectifs d'amélioration..." required></textarea>
+        <textarea id="objectifs" placeholder="Objectifs d'amélioration…"></textarea>
 
         <label for="remarques">Remarques</label>
-        <textarea id="remarques" placeholder="Remarques..." required></textarea>
+        <textarea id="remarques" placeholder="Remarques…"></textarea>
 
         <label for="accidents">Accidents, incidents</label>
-        <textarea id="accidents" placeholder="Accidents, incidents..." required></textarea>
+        <textarea id="accidents" placeholder="Accidents, incidents…"></textarea>
       </div>
 
       <div class="card" id="commentaireSection" style="display:none;">
         <h2>Validation et Commentaires</h2>
 
         <label for="commentaire">Commentaire général</label>
-        <textarea id="commentaire" placeholder="Observations, remarques..." required></textarea>
+        <textarea id="commentaire" placeholder="Observations, remarques…"></textarea>
 
         <div class="checkbox-row">
           <label><input type="checkbox" id="luEval" required /> Évaluateur : Lu et approuvé</label>
