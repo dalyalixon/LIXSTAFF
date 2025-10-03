@@ -16,12 +16,64 @@ const ficheComplementaire = document.getElementById("ficheComplementaire");
 const resultatDiv         = document.getElementById("resultat");
 const btnDownload         = document.getElementById("btnDownload");
 
+/* Champs d’identification */
+const champChantier   = document.getElementById("chantier");          // N° de chantier + nom
+const selectOuvrier   = document.getElementById("ouvrierSelect");     // liste ouvriers
+const inputNaissance  = document.getElementById("dateNaissance");     // peut rester vide (pas dans Excel)
+const inputQualif     = document.getElementById("qualification");
+const inputEntree     = document.getElementById("dateEntree");
+const inputDateEval   = document.getElementById("dateEvaluation");
+const inputInitial    = document.getElementById("initialEval");
+
 /* ================== CHARGER LES MÉTIERS ================== */
 Object.keys(METIER_QUESTIONS).forEach(metier => {
   const option = document.createElement("option");
   option.value = metier;
   option.textContent = metier;
   selectMetier.appendChild(option);
+});
+
+/* ================== REMPLIR LA LISTE DES OUVRIERS ================== */
+/** On charge le fichier généré “ouvriers.json”. Structure attendue :
+ *  [{ matricule, nom, prenom, entree: "YYYY-MM-DD", qualif, fonction }, ...]
+ */
+let OUVRIERS = [];
+async function chargerOuvriers() {
+  try {
+    const res = await fetch("ouvriers.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("ouvriers.json introuvable");
+    OUVRIERS = await res.json();
+    remplirSelectOuvriers(OUVRIERS);
+  } catch (e) {
+    console.error("Chargement ouvriers échoué :", e);
+  }
+}
+
+function remplirSelectOuvriers(list) {
+  // on vide d’abord
+  [...selectOuvrier.querySelectorAll("option:not(:first-child)")].forEach(o => o.remove());
+  list.forEach(o => {
+    const opt = document.createElement("option");
+    const mat = (o.matricule ?? "").toString().trim();
+    opt.value = mat;
+    opt.textContent = `${(o.nom || "").toUpperCase()} ${(o.prenom || "").toUpperCase()} (Mat. ${mat})`;
+    selectOuvrier.appendChild(opt);
+  });
+}
+
+/* ================== AUTOFILL À LA SÉLECTION DE L’OUVRIER ================== */
+selectOuvrier.addEventListener("change", () => {
+  const o = OUVRIERS.find(x => (x.matricule ?? "").toString() === selectOuvrier.value);
+  if (!o) return;
+  // Remplissage automatique depuis Excel
+  inputQualif.value   = (o.qualif ?? "").toString();
+  inputEntree.value   = normalizeDate(o.entree);
+  // Métier depuis “FONCTION”
+  if (o.fonction && selectMetier.querySelector(`option[value="${o.fonction}"]`)) {
+    selectMetier.value = o.fonction;
+    // Déclencher l’affichage des questions si besoin
+    selectMetier.dispatchEvent(new Event("change"));
+  }
 });
 
 /* ================== AFFICHER LES QUESTIONS ================== */
@@ -31,8 +83,9 @@ selectMetier.addEventListener("change", () => {
 
   if (metier && METIER_QUESTIONS[metier]) {
     METIER_QUESTIONS[metier].forEach((question) => {
+      // conteneur par question (utile pour les commentaires conditionnels)
       const qDiv = document.createElement("div");
-      qDiv.className = "question";
+      qDiv.className = "question question-item";
       qDiv.dataset.question = question;
 
       const labelEl = document.createElement("label");
@@ -47,9 +100,13 @@ selectMetier.addEventListener("change", () => {
         span.title = labels[i];
         span.dataset.value = labels[i];
         span.dataset.icon = icon;
+        span.dataset.index = i; // 0..5
         span.onclick = () => {
           scale.querySelectorAll("span").forEach(s => s.classList.remove("selected"));
           span.classList.add("selected");
+
+          // 👉 Si note 4e ou 5e (index 3 = Insuffisant, 4 = Mauvais) → commentaire obligatoire
+          handleAutoComment(qDiv, i);
         };
         scale.appendChild(span);
       });
@@ -69,45 +126,106 @@ selectMetier.addEventListener("change", () => {
   }
 });
 
+/* ================== COMMENTAIRE OBLIGATOIRE SI 4/5 ================== */
+function handleAutoComment(container, index) {
+  let comment = container.querySelector(".auto-comment");
+  if (index === 3 || index === 4) {
+    if (!comment) {
+      comment = document.createElement("textarea");
+      comment.className = "auto-comment";
+      comment.placeholder = "Commentaire (obligatoire pour une note Insuffisant/Mauvais)…";
+      comment.style.marginTop = "8px";
+      comment.style.width = "100%";
+      container.appendChild(comment);
+    }
+    comment.style.display = "";
+    comment.required = true;
+  } else if (comment) {
+    comment.required = false;
+    comment.style.display = "none";
+  }
+}
+
 /* ================== SOUMISSION ================== */
 document.getElementById("formEval").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const nom           = document.getElementById("nomEmploye").value.trim();
+  // Identification
+  const chantier      = champChantier.value.trim();
+  const ouvrierId     = selectOuvrier.value;
+  const ouvrier       = OUVRIERS.find(x => (x.matricule ?? "").toString() === ouvrierId);
+  const nomComplet    = ouvrier ? `${(ouvrier.nom||"").toUpperCase()} ${(ouvrier.prenom||"").toUpperCase()} (Mat. ${(ouvrier.matricule||"")})` : "";
+
   const metier        = selectMetier.value;
-  const dateNaissance = document.getElementById("dateNaissance").value;
-  const qualification = document.getElementById("qualification").value.trim();
-  const dateEntree    = document.getElementById("dateEntree").value;
-  const dateEval      = document.getElementById("dateEvaluation").value;
-  const auteur        = document.getElementById("auteurEvaluation").value.trim();
+  const dateNaissance = inputNaissance.value;       // si fourni manuellement
+  const qualification = inputQualif.value.trim();
+  const dateEntree    = inputEntree.value;
+  const dateEval      = inputDateEval.value;
+  const initialEval   = inputInitial.value.trim();
+
   const commentaire   = document.getElementById("commentaire").value.trim();
+
+  // Complément (tous NON obligatoires)
   const fonctions     = document.getElementById("fonctions").value.trim();
   const aspirations   = document.getElementById("aspirations").value.trim();
   const formations    = document.getElementById("formations").value.trim();
   const objectifs     = document.getElementById("objectifs").value.trim();
   const remarques     = document.getElementById("remarques").value.trim();
   const accidents     = document.getElementById("accidents").value.trim();
+
   const luEval        = document.getElementById("luEval").checked;
   const luEvalue      = document.getElementById("luEvalue").checked;
 
-  const champsObligatoires = [
-    nom, metier, dateNaissance, qualification, dateEntree, dateEval, auteur,
-    commentaire, fonctions, aspirations, formations, objectifs, remarques, accidents
-  ];
-  if (champsObligatoires.some(c => c === "") || !luEval || !luEvalue) {
-    alert("❌ Veuillez remplir tous les champs et cocher les cases de validation.");
+  // ✅ Champs vraiment obligatoires (d’après ta demande)
+  if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
+    alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
+    return;
+  }
+
+  // Vérifier que chaque question a une note + si 4/5 alors commentaire présent
+  let questionsCompletes = true;
+  let commentairesOK = true;
+  const evaluations = [];
+  document.querySelectorAll(".question").forEach(div => {
+    const critere  = div.dataset.question;
+    const selected = div.querySelector(".selected");
+    if (!selected) questionsCompletes = false;
+
+    // contrôle commentaire si 4/5
+    const idx = selected ? Number(selected.dataset.index) : -1;
+    const autoComment = div.querySelector(".auto-comment");
+    if ((idx === 3 || idx === 4) && (!autoComment || autoComment.value.trim() === "")) {
+      commentairesOK = false;
+      if (autoComment) autoComment.reportValidity?.();
+    }
+
+    evaluations.push({
+      critere,
+      emoji: selected ? selected.dataset.icon  : "",
+      note:  selected ? selected.dataset.value : "Non noté",
+      commentaire: autoComment ? autoComment.value.trim() : ""
+    });
+  });
+
+  if (!questionsCompletes) {
+    alert("❌ Veuillez répondre à toutes les questions d'évaluation.");
+    return;
+  }
+  if (!commentairesOK) {
+    alert("❌ Pour toute note Insuffisant/Mauvais, un commentaire est obligatoire.");
     return;
   }
 
   // Construire l'objet résultat
   const result = {
-    nom,
+    chantier,
+    ouvrier: nomComplet,
     metier,
     date_naissance: dateNaissance,
     qualification,
     date_entree: dateEntree,
     date_eval: dateEval,
-    auteur,
+    initial_evaluateur: initialEval,
     commentaire,
     fonctions,
     aspirations,
@@ -117,36 +235,19 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     accidents,
     approbateur: luEval ? "Oui" : "Non",
     evalue:      luEvalue ? "Oui" : "Non",
-    evaluation: [] // tableau {critere, emoji, note}
+    evaluation:  evaluations
   };
-
-  // Récupérer les notes (smiley + libellé)
-  let questionsCompletes = true;
-  document.querySelectorAll(".question").forEach(div => {
-    const critere  = div.dataset.question;
-    const selected = div.querySelector(".selected");
-    if (!selected) questionsCompletes = false;
-    result.evaluation.push({
-      critere,
-      emoji: selected ? selected.dataset.icon  : "",
-      note:  selected ? selected.dataset.value : "Non noté"
-    });
-  });
-  if (!questionsCompletes) {
-    alert("❌ Veuillez répondre à toutes les questions d'évaluation.");
-    return;
-  }
 
   // Aperçu écran (facultatif)
   afficherResultat(result);
 
   try {
     // ====== PDF complet en jsPDF ======
-    const fileName = `${sanitizeFileName(nom)}_${sanitizeFileName(metier)}_evaluation.pdf`;
-    const doc = buildPdfWithJsPDF(result);       // on récupère l'instance jsPDF
-    const base64 = pdfBase64FromDoc(doc);        // base64 propre (binaire → base64)
+    const fileName = `${sanitizeFileName(nomComplet || "ouvrier")}_${sanitizeFileName(metier)}_evaluation.pdf`;
+    const doc = buildPdfWithJsPDF(result);
+    const base64 = pdfBase64FromDoc(doc);
 
-    // Téléchargement local (facultatif, pour tester)
+    // Téléchargement local (pour test)
     if (btnDownload) {
       btnDownload.style.display = "inline-block";
       btnDownload.onclick = () => { doc.save(fileName); };
@@ -157,16 +258,20 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     if (FLOW_API_KEY) headers["x-api-key"] = FLOW_API_KEY;
 
     const payload = {
-      subject:  `Évaluation - ${nom} (${metier}) – ${dateEval}`,
+      subject:  `Évaluation - ${nomComplet} (${metier}) – ${dateEval}`,
       filename: fileName,      // doit finir par .pdf
       pdfBase64: base64,       // côté Flow → base64ToBinary(triggerBody()?['pdfBase64'])
       data: {
-        nom, metier, dateEval, auteur, commentaire,
+        chantier,
+        ouvrier: nomComplet,
+        metier, dateEval,
+        initial_evaluateur: initialEval,
+        commentaire,
         fonctions, aspirations, formations, objectifs, remarques, accidents,
         approbateur: result.approbateur,
         evalue: result.evalue,
         evaluation: result.evaluation,
-        emailBodyHtml: buildEmailHtml(result) // si tu veux t'en servir dans le mail
+        emailBodyHtml: buildEmailHtml(result)
       }
     };
 
@@ -192,27 +297,30 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
 /* ================== APERÇU ÉCRAN ================== */
 function afficherResultat(d) {
   let html = `<h2>Évaluation enregistrée</h2>`;
-  html += `<strong>Employé :</strong> ${escapeHtml(d.nom)}<br>`;
+  html += `<strong>N° de chantier + nom :</strong> ${escapeHtml(d.chantier)}<br>`;
+  html += `<strong>Ouvrier :</strong> ${escapeHtml(d.ouvrier)}<br>`;
   html += `<strong>Métier :</strong> ${escapeHtml(d.metier)}<br>`;
-  html += `<strong>Date de naissance :</strong> ${escapeHtml(d.date_naissance)}<br>`;
-  html += `<strong>Qualification :</strong> ${escapeHtml(d.qualification)}<br>`;
-  html += `<strong>Date d’entrée :</strong> ${escapeHtml(d.date_entree)}<br>`;
+  if (d.date_naissance) html += `<strong>Date de naissance :</strong> ${escapeHtml(d.date_naissance)}<br>`;
+  if (d.qualification)  html += `<strong>Qualification :</strong> ${escapeHtml(d.qualification)}<br>`;
+  if (d.date_entree)    html += `<strong>Date d’entrée :</strong> ${escapeHtml(d.date_entree)}<br>`;
   html += `<strong>Date de l’évaluation :</strong> ${escapeHtml(d.date_eval)}<br>`;
-  html += `<strong>Auteur de l’évaluation :</strong> ${escapeHtml(d.auteur)}<br><br>`;
+  html += `<strong>Initial de l’évaluateur :</strong> ${escapeHtml(d.initial_evaluateur)}<br><br>`;
 
   html += `<strong>Critères :</strong><br>`;
   d.evaluation.forEach(row => {
-    html += `• ${escapeHtml(row.critere)} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong><br>`;
+    html += `• ${escapeHtml(row.critere)} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong>`;
+    if (row.commentaire) html += `<br><em>Commentaire :</em> ${escapeHtml(row.commentaire)}`;
+    html += `<br>`;
   });
 
-  html += `<br><strong>Commentaire :</strong><br>${nl2br(escapeHtml(d.commentaire))}<br>`;
+  if (d.commentaire) html += `<br><strong>Commentaire général :</strong><br>${nl2br(escapeHtml(d.commentaire))}<br>`;
   html += `<br><strong>Compléments :</strong><br>`;
-  html += `<strong>Fonctions :</strong> ${escapeHtml(d.fonctions)}<br>`;
-  html += `<strong>Aspirations :</strong> ${escapeHtml(d.aspirations)}<br>`;
-  html += `<strong>Formations :</strong> ${escapeHtml(d.formations)}<br>`;
-  html += `<strong>Objectifs :</strong> ${escapeHtml(d.objectifs)}<br>`;
-  html += `<strong>Remarques :</strong> ${escapeHtml(d.remarques)}<br>`;
-  html += `<strong>Accidents :</strong> ${escapeHtml(d.accidents)}<br>`;
+  if (d.fonctions) html += `<strong>Fonctions exercées sur le chantier :</strong> ${escapeHtml(d.fonctions)}<br>`;
+  if (d.aspirations) html += `<strong>Aspirations :</strong> ${escapeHtml(d.aspirations)}<br>`;
+  if (d.formations) html += `<strong>Formations :</strong> ${escapeHtml(d.formations)}<br>`;
+  if (d.objectifs) html += `<strong>Objectifs :</strong> ${escapeHtml(d.objectifs)}<br>`;
+  if (d.remarques) html += `<strong>Remarques :</strong> ${escapeHtml(d.remarques)}<br>`;
+  if (d.accidents) html += `<strong>Accidents :</strong> ${escapeHtml(d.accidents)}<br>`;
   html += `<strong>Évaluateur lu et approuvé :</strong> ${escapeHtml(d.approbateur)}<br>`;
   html += `<strong>Évalué lu et approuvé :</strong> ${escapeHtml(d.evalue)}<br>`;
 
@@ -251,13 +359,14 @@ function buildPdfWithJsPDF(d) {
     y += 16;
   };
 
-  info("Employé :", d.nom);
+  info("N° de chantier + nom :", d.chantier);
+  info("Ouvrier :", d.ouvrier);
   info("Métier :", d.metier);
-  info("Date de naissance :", d.date_naissance);
-  info("Qualification :", d.qualification);
-  info("Date d’entrée :", d.date_entree);
+  if (d.date_naissance) info("Date de naissance :", d.date_naissance);
+  if (d.qualification)  info("Qualification :", d.qualification);
+  if (d.date_entree)    info("Date d’entrée :", d.date_entree);
   info("Date de l’évaluation :", d.date_eval);
-  info("Auteur :", d.auteur);
+  info("Initial de l’évaluateur :", d.initial_evaluateur);
   info("Évaluateur lu et approuvé :", d.approbateur);
   info("Évalué lu et approuvé :", d.evalue);
 
@@ -265,19 +374,21 @@ function buildPdfWithJsPDF(d) {
 
   // Critères (2 colonnes : Critère / Appréciation)
   section("Critères d’évaluation");
-  tableHeader(["Critère", "Appréciation"], [480, 150]);
+  tableHeader(["Critère", "Appréciation", "Commentaire"], [360, 120, 150]);
   d.evaluation.forEach(row => {
-    tableRow([String(row.critere || ""), String(row.note || "")], [480, 150]);
+    tableRow([String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")], [360, 120, 150]);
   });
 
   // Commentaire
-  section("Commentaire");
-  y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
+  if (d.commentaire) {
+    section("Commentaire général");
+    y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
+  }
 
   // Complément
   section("Complément d’évaluation");
   y = multiText(
-    `• Fonctions : ${d.fonctions || ""}\n` +
+    `• Fonctions exercées sur le chantier : ${d.fonctions || ""}\n` +
     `• Aspirations : ${d.aspirations || ""}\n` +
     `• Formations : ${d.formations || ""}\n` +
     `• Objectifs : ${d.objectifs || ""}\n` +
@@ -286,7 +397,6 @@ function buildPdfWithJsPDF(d) {
     margin, y, pageW - margin*2
   );
 
-  // ⚠️ On renvoie l'instance jsPDF (pas une dataURI)
   return doc;
 
   // Helpers PDF
@@ -331,7 +441,6 @@ function buildPdfWithJsPDF(d) {
 
 /* ================== CONVERSION PDF → BASE64 ================== */
 function pdfBase64FromDoc(doc) {
-  // Sortie binaire puis conversion en base64 pour Flow
   const buffer = doc.output('arraybuffer');
   return base64FromArrayBuffer(buffer);
 }
@@ -349,37 +458,41 @@ function buildEmailHtml(d){
     `<tr>
       <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.critere)}</td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee"><b>${escapeHtml(r.note)}</b></td>
+      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.commentaire || "")}</td>
     </tr>`
   ).join("");
   return `
   <div style="font-family:Arial,sans-serif;line-height:1.45;color:#111">
     <h2 style="margin:0 0 12px">Évaluation du personnel</h2>
-    <p><b>Employé :</b> ${escapeHtml(d.nom)}<br>
+    <p>
+       <b>N° de chantier + nom :</b> ${escapeHtml(d.chantier)}<br>
+       <b>Ouvrier :</b> ${escapeHtml(d.ouvrier)}<br>
        <b>Métier :</b> ${escapeHtml(d.metier)}<br>
        <b>Date :</b> ${escapeHtml(d.date_eval)}<br>
-       <b>Auteur :</b> ${escapeHtml(d.auteur)}</p>
+       <b>Initial évaluateur :</b> ${escapeHtml(d.initial_evaluateur)}
+    </p>
     <h3 style="margin:16px 0 8px">Critères</h3>
     <table style="border-collapse:collapse;width:100%">
       <thead>
         <tr>
           <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Critère</th>
           <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Appréciation</th>
+          <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Commentaire</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    <h3 style="margin:16px 0 8px">Commentaire</h3>
-    <p>${nl2br(escapeHtml(d.commentaire))}</p>
-    <h3 style="margin:16px 0 8px">Compléments</h3>
+    ${d.commentaire ? `<h3 style="margin:16px 0 8px">Commentaire général</h3><p>${nl2br(escapeHtml(d.commentaire))}</p>` : ""}
+    <h3 style="margin:16px 0 8px">Complément</h3>
     <ul>
-      <li><b>Fonctions :</b> ${escapeHtml(d.fonctions)}</li>
-      <li><b>Aspirations :</b> ${escapeHtml(d.aspirations)}</li>
-      <li><b>Formations :</b> ${escapeHtml(d.formations)}</li>
-      <li><b>Objectifs :</b> ${escapeHtml(d.objectifs)}</li>
-      <li><b>Remarques :</b> ${escapeHtml(d.remarques)}</li>
-      <li><b>Accidents :</b> ${escapeHtml(d.accidents)}</li>
-      <li><b>Évaluateur :</b> ${escapeHtml(d.approbateur)}</li>
-      <li><b>Évalué :</b> ${escapeHtml(d.evalue)}</li>
+      <li><b>Fonctions exercées sur le chantier :</b> ${escapeHtml(d.fonctions || "")}</li>
+      <li><b>Aspirations :</b> ${escapeHtml(d.aspirations || "")}</li>
+      <li><b>Formations :</b> ${escapeHtml(d.formations || "")}</li>
+      <li><b>Objectifs :</b> ${escapeHtml(d.objectifs || "")}</li>
+      <li><b>Remarques :</b> ${escapeHtml(d.remarques || "")}</li>
+      <li><b>Accidents :</b> ${escapeHtml(d.accidents || "")}</li>
+      <li><b>Évaluateur lu et approuvé :</b> ${escapeHtml(d.approbateur)}</li>
+      <li><b>Évalué lu et approuvé :</b> ${escapeHtml(d.evalue)}</li>
     </ul>
     <hr><p>📎 Le PDF complet est joint.</p>
   </div>`;
@@ -389,3 +502,18 @@ function buildEmailHtml(d){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]))}
 function nl2br(s){return String(s).replace(/\n/g,"<br>")}
 function sanitizeFileName(s){return String(s).replace(/[\\/:*?"<>|]/g,"_").replace(/\s+/g,"_")}
+function normalizeDate(v){
+  if (!v) return "";
+  // accepte Date, "YYYY-MM-DD" ou "DD/MM/YYYY"
+  if (v instanceof Date) return v.toISOString().slice(0,10);
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return s;
+}
+
+/* ================== BOOT ================== */
+document.addEventListener("DOMContentLoaded", () => {
+  chargerOuvriers(); // charge ouvriers.json et remplit la liste
+});
