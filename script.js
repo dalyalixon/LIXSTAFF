@@ -1,7 +1,5 @@
 /* ================== CONFIG POWER AUTOMATE ================== */
-/** ⚠️ Mets ici l'URL “HTTP POST URL” de ton déclencheur Power Automate */
 const FLOW_URL = "https://default67f421526f984c3d8a955ed93c38ce.af.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/71d4d5c8f94f41848ddfc7bfb336ae8b/triggers/manual/paths/invoke/?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nxFtQ01laXfNBx0t3SB-DLvAnvQ3zeBpOG6OsKBgovU";
-/** Optionnel: si tu protèges le flow avec un header x-api-key */
 const FLOW_API_KEY = "";
 
 /* ================== UI / DONNÉES ================== */
@@ -19,7 +17,7 @@ const btnDownload         = document.getElementById("btnDownload");
 /* Champs d’identification */
 const champChantier   = document.getElementById("chantier");          // N° de chantier + nom
 const selectOuvrier   = document.getElementById("ouvrierSelect");     // liste ouvriers
-const inputNaissance  = document.getElementById("dateNaissance");     // peut rester vide (pas dans Excel)
+const inputNaissance  = document.getElementById("dateNaissance");     // si fourni à la main
 const inputQualif     = document.getElementById("qualification");
 const inputEntree     = document.getElementById("dateEntree");
 const inputDateEval   = document.getElementById("dateEvaluation");
@@ -33,24 +31,34 @@ Object.keys(METIER_QUESTIONS).forEach(metier => {
   selectMetier.appendChild(option);
 });
 
-/* ================== REMPLIR LA LISTE DES OUVRIERS ================== */
-/** On charge le fichier généré “ouvriers.json”. Structure attendue :
- *  [{ matricule, nom, prenom, entree: "YYYY-MM-DD", qualif, fonction }, ...]
- */
+/* ================== OUVRIERS: window.OUVRIERS > /ouvriers.json ================== */
 let OUVRIERS = [];
+
 async function chargerOuvriers() {
-  try {
-    const res = await fetch("ouvriers.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("ouvriers.json introuvable");
-    OUVRIERS = await res.json();
+  if (Array.isArray(window.OUVRIERS) && window.OUVRIERS.length) {
+    OUVRIERS = window.OUVRIERS;
     remplirSelectOuvriers(OUVRIERS);
-  } catch (e) {
-    console.error("Chargement ouvriers échoué :", e);
+    return;
   }
+  try {
+    const res = await fetch("/ouvriers.json", { cache: "no-store" });
+    if (res.ok) {
+      OUVRIERS = await res.json();
+      remplirSelectOuvriers(OUVRIERS);
+      return;
+    }
+  } catch (e) {
+    console.error("Chargement de /ouvriers.json échoué:", e);
+  }
+  // Fallback minimal
+  OUVRIERS = [
+    { matricule: "TEST1", nom: "DUPONT", prenom: "JEAN", entree: "2020-01-01", qualif: "4", fonction: "Maçons" },
+    { matricule: "TEST2", nom: "MARTIN", prenom: "PAUL", entree: "2019-03-12", qualif: "7", fonction: "Coffreurs" }
+  ];
+  remplirSelectOuvriers(OUVRIERS);
 }
 
 function remplirSelectOuvriers(list) {
-  // on vide d’abord
   [...selectOuvrier.querySelectorAll("option:not(:first-child)")].forEach(o => o.remove());
   list.forEach(o => {
     const opt = document.createElement("option");
@@ -60,18 +68,17 @@ function remplirSelectOuvriers(list) {
     selectOuvrier.appendChild(opt);
   });
 }
+window.remplirSelectOuvriers = remplirSelectOuvriers;
 
 /* ================== AUTOFILL À LA SÉLECTION DE L’OUVRIER ================== */
 selectOuvrier.addEventListener("change", () => {
   const o = OUVRIERS.find(x => (x.matricule ?? "").toString() === selectOuvrier.value);
   if (!o) return;
-  // Remplissage automatique depuis Excel
   inputQualif.value   = (o.qualif ?? "").toString();
   inputEntree.value   = normalizeDate(o.entree);
-  // Métier depuis “FONCTION”
+
   if (o.fonction && selectMetier.querySelector(`option[value="${o.fonction}"]`)) {
     selectMetier.value = o.fonction;
-    // Déclencher l’affichage des questions si besoin
     selectMetier.dispatchEvent(new Event("change"));
   }
 });
@@ -83,7 +90,6 @@ selectMetier.addEventListener("change", () => {
 
   if (metier && METIER_QUESTIONS[metier]) {
     METIER_QUESTIONS[metier].forEach((question) => {
-      // conteneur par question (utile pour les commentaires conditionnels)
       const qDiv = document.createElement("div");
       qDiv.className = "question question-item";
       qDiv.dataset.question = question;
@@ -104,8 +110,7 @@ selectMetier.addEventListener("change", () => {
         span.onclick = () => {
           scale.querySelectorAll("span").forEach(s => s.classList.remove("selected"));
           span.classList.add("selected");
-
-          // 👉 Si note 4e ou 5e (index 3 = Insuffisant, 4 = Mauvais) → commentaire obligatoire
+          // Commentaire obligatoire si Insuffisant (index 3) ou Mauvais (index 4)
           handleAutoComment(qDiv, i);
         };
         scale.appendChild(span);
@@ -150,14 +155,13 @@ function handleAutoComment(container, index) {
 document.getElementById("formEval").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Identification
   const chantier      = champChantier.value.trim();
   const ouvrierId     = selectOuvrier.value;
   const ouvrier       = OUVRIERS.find(x => (x.matricule ?? "").toString() === ouvrierId);
   const nomComplet    = ouvrier ? `${(ouvrier.nom||"").toUpperCase()} ${(ouvrier.prenom||"").toUpperCase()} (Mat. ${(ouvrier.matricule||"")})` : "";
 
   const metier        = selectMetier.value;
-  const dateNaissance = inputNaissance.value;       // si fourni manuellement
+  const dateNaissance = inputNaissance.value;
   const qualification = inputQualif.value.trim();
   const dateEntree    = inputEntree.value;
   const dateEval      = inputDateEval.value;
@@ -165,7 +169,6 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
 
   const commentaire   = document.getElementById("commentaire").value.trim();
 
-  // Complément (tous NON obligatoires)
   const fonctions     = document.getElementById("fonctions").value.trim();
   const aspirations   = document.getElementById("aspirations").value.trim();
   const formations    = document.getElementById("formations").value.trim();
@@ -176,13 +179,11 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
   const luEval        = document.getElementById("luEval").checked;
   const luEvalue      = document.getElementById("luEvalue").checked;
 
-  // ✅ Champs vraiment obligatoires (d’après ta demande)
   if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
     alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
     return;
   }
 
-  // Vérifier que chaque question a une note + si 4/5 alors commentaire présent
   let questionsCompletes = true;
   let commentairesOK = true;
   const evaluations = [];
@@ -191,7 +192,6 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     const selected = div.querySelector(".selected");
     if (!selected) questionsCompletes = false;
 
-    // contrôle commentaire si 4/5
     const idx = selected ? Number(selected.dataset.index) : -1;
     const autoComment = div.querySelector(".auto-comment");
     if ((idx === 3 || idx === 4) && (!autoComment || autoComment.value.trim() === "")) {
@@ -216,7 +216,6 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     return;
   }
 
-  // Construire l'objet résultat
   const result = {
     chantier,
     ouvrier: nomComplet,
@@ -238,29 +237,25 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     evaluation:  evaluations
   };
 
-  // Aperçu écran (facultatif)
   afficherResultat(result);
 
   try {
-    // ====== PDF complet en jsPDF ======
     const fileName = `${sanitizeFileName(nomComplet || "ouvrier")}_${sanitizeFileName(metier)}_evaluation.pdf`;
     const doc = buildPdfWithJsPDF(result);
     const base64 = pdfBase64FromDoc(doc);
 
-    // Téléchargement local (pour test)
     if (btnDownload) {
       btnDownload.style.display = "inline-block";
       btnDownload.onclick = () => { doc.save(fileName); };
     }
 
-    // ====== ENVOI AU FLOW (Power Automate) ======
     const headers = { "Content-Type": "application/json" };
     if (FLOW_API_KEY) headers["x-api-key"] = FLOW_API_KEY;
 
     const payload = {
       subject:  `Évaluation - ${nomComplet} (${metier}) – ${dateEval}`,
-      filename: fileName,      // doit finir par .pdf
-      pdfBase64: base64,       // côté Flow → base64ToBinary(triggerBody()?['pdfBase64'])
+      filename: fileName,
+      pdfBase64: base64,
       data: {
         chantier,
         ouvrier: nomComplet,
@@ -315,12 +310,12 @@ function afficherResultat(d) {
 
   if (d.commentaire) html += `<br><strong>Commentaire général :</strong><br>${nl2br(escapeHtml(d.commentaire))}<br>`;
   html += `<br><strong>Compléments :</strong><br>`;
-  if (d.fonctions) html += `<strong>Fonctions exercées sur le chantier :</strong> ${escapeHtml(d.fonctions)}<br>`;
-  if (d.aspirations) html += `<strong>Aspirations :</strong> ${escapeHtml(d.aspirations)}<br>`;
+  if (d.fonctions)  html += `<strong>Fonctions exercées sur le chantier :</strong> ${escapeHtml(d.fonctions)}<br>`;
+  if (d.aspirations)html += `<strong>Aspirations :</strong> ${escapeHtml(d.aspirations)}<br>`;
   if (d.formations) html += `<strong>Formations :</strong> ${escapeHtml(d.formations)}<br>`;
-  if (d.objectifs) html += `<strong>Objectifs :</strong> ${escapeHtml(d.objectifs)}<br>`;
-  if (d.remarques) html += `<strong>Remarques :</strong> ${escapeHtml(d.remarques)}<br>`;
-  if (d.accidents) html += `<strong>Accidents :</strong> ${escapeHtml(d.accidents)}<br>`;
+  if (d.objectifs)  html += `<strong>Objectifs :</strong> ${escapeHtml(d.objectifs)}<br>`;
+  if (d.remarques)  html += `<strong>Remarques :</strong> ${escapeHtml(d.remarques)}<br>`;
+  if (d.accidents)  html += `<strong>Accidents :</strong> ${escapeHtml(d.accidents)}<br>`;
   html += `<strong>Évaluateur lu et approuvé :</strong> ${escapeHtml(d.approbateur)}<br>`;
   html += `<strong>Évalué lu et approuvé :</strong> ${escapeHtml(d.evalue)}<br>`;
 
@@ -330,7 +325,6 @@ function afficherResultat(d) {
 }
 
 /* ================== PDF (jsPDF) ================== */
-// ⚠️ On n'essaie pas d'imprimer les émojis dans le PDF (polices jsPDF par défaut ne les supportent pas)
 function buildPdfWithJsPDF(d) {
   const { jsPDF } = (window.jspdf || {});
   if (!jsPDF) throw new Error("jsPDF introuvable – vérifie l’inclusion de la bibliothèque (jspdf.umd.min.js).");
@@ -341,12 +335,10 @@ function buildPdfWithJsPDF(d) {
   const margin = 36;
   let y = margin;
 
-  // Titre
   doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(249,115,22);
   doc.text("LixStaff – Évaluation du personnel", margin, y);
   y += 24;
 
-  // Infos
   doc.setTextColor(0,0,0);
   doc.setFont('helvetica','normal');
   doc.setFontSize(11);
@@ -372,20 +364,17 @@ function buildPdfWithJsPDF(d) {
 
   y += 8;
 
-  // Critères (2 colonnes : Critère / Appréciation)
   section("Critères d’évaluation");
   tableHeader(["Critère", "Appréciation", "Commentaire"], [360, 120, 150]);
   d.evaluation.forEach(row => {
     tableRow([String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")], [360, 120, 150]);
   });
 
-  // Commentaire
   if (d.commentaire) {
     section("Commentaire général");
     y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
   }
 
-  // Complément
   section("Complément d’évaluation");
   y = multiText(
     `• Fonctions exercées sur le chantier : ${d.fonctions || ""}\n` +
@@ -399,7 +388,6 @@ function buildPdfWithJsPDF(d) {
 
   return doc;
 
-  // Helpers PDF
   function newPageIfNeeded(extra=0){
     if (y + extra > pageH - margin){ doc.addPage(); y = margin; }
   }
@@ -504,7 +492,6 @@ function nl2br(s){return String(s).replace(/\n/g,"<br>")}
 function sanitizeFileName(s){return String(s).replace(/[\\/:*?"<>|]/g,"_").replace(/\s+/g,"_")}
 function normalizeDate(v){
   if (!v) return "";
-  // accepte Date, "YYYY-MM-DD" ou "DD/MM/YYYY"
   if (v instanceof Date) return v.toISOString().slice(0,10);
   const s = String(v);
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
@@ -515,5 +502,5 @@ function normalizeDate(v){
 
 /* ================== BOOT ================== */
 document.addEventListener("DOMContentLoaded", () => {
-  chargerOuvriers(); // charge ouvriers.json et remplit la liste
+  chargerOuvriers(); // remplit la liste depuis ouvriers.js ou /ouvriers.json
 });
