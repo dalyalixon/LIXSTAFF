@@ -24,18 +24,18 @@
         <label for="ouvrierSelect">Ouvrier</label>
         <select id="ouvrierSelect" required>
           <option value="">Sélectionnez un ouvrier…</option>
-          <!-- rempli par script.js -->
+          <!-- rempli par script.js ou via ouvriers.js -->
         </select>
 
-        <!-- 2) Date de naissance -->
+        <!-- 2) Date de naissance (facultatif) -->
         <label for="dateNaissance">Date de naissance</label>
         <input type="date" id="dateNaissance" />
 
-        <!-- 3) Qualification -->
+        <!-- 3) Qualification (autofill si dispo) -->
         <label for="qualification">Qualification</label>
         <input type="text" id="qualification" placeholder="Qualification actuelle" />
 
-        <!-- 4) Date d’entrée -->
+        <!-- 4) Date d’entrée (autofill si dispo) -->
         <label for="dateEntree">Date d’entrée</label>
         <input type="date" id="dateEntree" />
 
@@ -57,13 +57,12 @@
       <div class="card" id="questionsContainer" style="display:none;">
         <h2>Critères d’évaluation</h2>
         <div id="questionsList"></div>
-        <!-- Les commentaires par critère s’ouvrent automatiquement si note 4/5 -->
       </div>
 
       <div class="card" id="ficheComplementaire" style="display:none;">
         <h2>Complément d’évaluation</h2>
 
-        <!-- Tous ces champs deviennent NON obligatoires -->
+        <!-- Tous ces champs sont NON obligatoires -->
         <label for="fonctions">Fonctions exercées sur le chantier</label>
         <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
 
@@ -106,7 +105,22 @@
 
   <!-- Scripts (ordre important) -->
   <script src="questions.js"></script>
+  <script src="ouvriers.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="script.js"></script>
+
+  <!-- Shim pour pré-remplir la liste si ouvriers.js est déjà chargé -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const select = document.getElementById('ouvrierSelect');
+        if (window.OUVRIERS && Array.isArray(window.OUVRIERS) && select && select.options.length <= 1) {
+          if (typeof window.remplirSelectOuvriers === 'function') {
+            window.remplirSelectOuvriers(window.OUVRIERS);
+          }
+        }
+      } catch (e) { /* no-op */ }
+    });
+  </script>
 </body>
 </html>
