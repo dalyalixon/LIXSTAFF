@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LixStaff – Évaluation annuelle</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<!-- data-type="annuelle" pour que script.js ajuste le sujet etc. -->
+<body data-type="annuelle">
+  <header>
+    <h1>LixStaff – Évaluation annuelle</h1>
+  </header>
+
+  <main class="container">
+    <form id="formEval">
+      <div class="card">
+        <h2>Identification</h2>
+
+        <label for="chantier">N° de chantier + nom</label>
+        <input type="text" id="chantier" placeholder="Ex : 24031 – Tunnel Albert" required />
+
+        <label for="ouvrierSelect">Ouvrier</label>
+        <select id="ouvrierSelect" required>
+          <option value="">Sélectionnez un ouvrier…</option>
+        </select>
+
+        <label for="dateNaissance">Date de naissance</label>
+        <input type="date" id="dateNaissance" />
+
+        <label for="qualification">Qualification</label>
+        <input type="text" id="qualification" placeholder="Qualification actuelle" />
+
+        <label for="dateEntree">Date d’entrée</label>
+        <input type="date" id="dateEntree" />
+
+        <label for="dateEvaluation">Date de l’évaluation</label>
+        <input type="date" id="dateEvaluation" required />
+
+        <label for="initialEval">Initial de l’évaluateur</label>
+        <input type="text" id="initialEval" placeholder="Ex : DH" required />
+
+        <label for="selectMetier">Métier</label>
+        <select id="selectMetier" required>
+          <option value="">Sélectionnez un métier</option>
+        </select>
+      </div>
+
+      <div class="card" id="questionsContainer" style="display:none;">
+        <h2>Critères d’évaluation</h2>
+        <div id="questionsList"></div>
+      </div>
+
+      <div class="card" id="ficheComplementaire" style="display:none;">
+        <h2>Complément d’évaluation</h2>
+
+        <label for="fonctions">Fonctions exercées sur le chantier</label>
+        <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
+
+        <label for="aspirations">Aspirations professionnelles</label>
+        <textarea id="aspirations" placeholder="Aspirations professionnelles…"></textarea>
+
+        <label for="formations">Formations souhaitées</label>
+        <textarea id="formations" placeholder="Formations souhaitées…"></textarea>
+
+        <label for="objectifs">Objectifs d’amélioration</label>
+        <textarea id="objectifs" placeholder="Objectifs d'amélioration…"></textarea>
+
+        <label for="remarques">Remarques</label>
+        <textarea id="remarques" placeholder="Remarques…"></textarea>
+
+        <label for="accidents">Accidents, incidents</label>
+        <textarea id="accidents" placeholder="Accidents, incidents…"></textarea>
+      </div>
+
+      <div class="card" id="commentaireSection" style="display:none;">
+        <h2>Validation et Commentaires</h2>
+
+        <label for="commentaire">Commentaire général</label>
+        <textarea id="commentaire" placeholder="Observations, remarques…"></textarea>
+
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="luEval" required /> Évaluateur : Lu et approuvé</label>
+          <label><input type="checkbox" id="luEvalue" required /> Évalué : Lu et approuvé</label>
+        </div>
+
+        <div class="actions-row">
+          <button type="submit">Soumettre l’évaluation</button>
+          <button type="button" id="btnDownload" style="display:none">Télécharger le PDF</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="card" id="resultat" style="display:none;"></div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="questions.js"></script>
+  <script src="ouvriers.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="script.js"></script>
+</body>
+</html>
