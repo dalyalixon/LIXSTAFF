@@ -71,7 +71,7 @@ selectOuvrier.addEventListener("change", () => {
   if (!o) return;
   inputQualif.value    = o.qualif ?? "";
   inputEntree.value    = normalizeDate(o.entree);
-  inputNaissance.value = normalizeDate(o.naissance);   // ✅ nouvelle ligne
+  inputNaissance.value = normalizeDate(o.naissance);   // ✅ Remplit la date de naissance
 
   if (o.fonction && selectMetier.querySelector(`option[value="${o.fonction}"]`)) {
     selectMetier.value = o.fonction;
@@ -157,5 +157,13 @@ function normalizeDate(v){
 
 /* ================== INITIALISATION ================== */
 document.addEventListener("DOMContentLoaded", () => {
+  // 1️⃣ Charger les ouvriers
   chargerOuvriers();
+
+  // 2️⃣ Mettre automatiquement la date du jour dans "Date de l’évaluation"
+  const today = new Date().toISOString().slice(0, 10);
+  const inputDateEval = document.getElementById("dateEvaluation");
+  if (inputDateEval && !inputDateEval.value) {
+    inputDateEval.value = today;
+  }
 });
