@@ -1,5 +1,5 @@
 /* Auto-generated from TABLEAU METIER EVALUATIONS.xlsx */
-const OUVRIERS = [
+window.OUVRIERS = [
   {
     "matricule": "736",
     "nom": "VANNEMBERG",
@@ -206,7 +206,7 @@ const OUVRIERS = [
     "prenom": "QUENTIN",
     "entree": "2014-09-08",
     "qualif": "3",
-    "fonction": "Soudeur "
+    "fonction": "Soudeur"
   },
   {
     "matricule": "1675",
@@ -569,5 +569,3 @@ const OUVRIERS = [
     "fonction": "Maçons"
   }
 ];
-if (typeof window !== 'undefined') { window.OUVRIERS = OUVRIERS; }
-export { OUVRIERS };
