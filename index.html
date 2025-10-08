@@ -6,82 +6,26 @@
   <title>LixStaff – Accueil</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f9fafb;
-      color: #222;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background: #f97316;
-      color: white;
-      text-align: center;
-      padding: 1.2rem 0;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 2rem;
-    }
-    h1 {
-      font-size: 1.8rem;
-      margin: 0;
-    }
-    .card {
-      background: white;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      text-align: center;
-      width: 320px;
-    }
-    button {
-      background: #f97316;
-      color: white;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      width: 100%;
-    }
-    button:hover {
-      background: #ea580c;
-    }
-    footer {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #666;
-      padding: 1rem 0;
-    }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f9fafb; margin:0; min-height:100vh; display:flex; flex-direction:column; }
+    header { background:#f97316; color:#fff; padding:16px; text-align:center; }
+    main { flex:1; display:flex; align-items:center; justify-content:center; }
+    .card { background:#fff; padding:28px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,.08); text-align:center; width:320px; }
+    .actions { display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+    .btn { padding:12px 16px; border-radius:10px; border:1px solid #eee; cursor:pointer; font-weight:600; }
+    .btn-primary { background:#f97316; color:#fff; border-color:#f97316; }
+    .btn-primary:hover { background:#ea580c; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>LixStaff – Évaluations du personnel</h1>
-  </header>
-
+  <header><h1>LixStaff – Évaluations du personnel</h1></header>
   <main>
     <div class="card">
       <h2>Choisir le type d’évaluation</h2>
-      <p>Sélectionnez le formulaire que vous souhaitez remplir :</p>
-      <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem;">
-        <button onclick="location.href='annuel.html'">Évaluation annuelle</button>
-        <button onclick="location.href='periodique.html'">Évaluation périodique</button>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="location.href='annuel.html'">Évaluation annuelle</button>
+        <button class="btn" onclick="location.href='periodique.html'">Évaluation périodique</button>
       </div>
     </div>
   </main>
-
-  <footer>
-    © 2025 LixStaff – Tous droits réservés
-  </footer>
 </body>
 </html>
