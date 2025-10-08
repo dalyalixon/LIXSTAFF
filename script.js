@@ -57,12 +57,9 @@ async function chargerOuvriers() {
       OUVRIERS = await res.json();
     }
     remplirSelectOuvriers(OUVRIERS);
-    if (!selectOuvrier || selectOuvrier.options.length <= 1) {
-      console.warn("Liste ouvriers vide: vérifie le fichier ouvriers.js/ouvriers.json et le chemin.");
-    }
   } catch (e) {
     console.error("Chargement ouvriers échoué :", e);
-    alert("⚠️ Impossible de charger la liste des ouvriers.\nVérifie que 'ouvriers.js' (window.OUVRIERS) ou 'ouvriers.json' est bien déployé au même niveau.");
+    // Pas de blocage : on laisse l'utilisateur saisir manuellement si besoin
   }
 }
 
@@ -123,6 +120,7 @@ if (selectMetier) {
           span.onclick = () => {
             scale.querySelectorAll("span").forEach(s => s.classList.remove("selected"));
             span.classList.add("selected");
+            // On ouvre un champ commentaire si 4/5 mais SANS le rendre obligatoire
             handleAutoComment(qDiv, i);
           };
           scale.appendChild(span);
@@ -144,27 +142,27 @@ if (selectMetier) {
   });
 }
 
-/* ================== COMMENTAIRE AUTO SI NOTE BASSE ================== */
+/* ================== COMMENTAIRE OUVERT SI NOTE BASSE (mais pas obligatoire) ================== */
 function handleAutoComment(container, index) {
   let comment = container.querySelector(".auto-comment");
   if (index === 3 || index === 4) {
     if (!comment) {
       comment = document.createElement("textarea");
       comment.className = "auto-comment";
-      comment.placeholder = "Commentaire obligatoire (note insuffisante/mauvaise)…";
+      comment.placeholder = "Commentaire (recommandé si note insuffisante/mauvaise)…";
       comment.style.marginTop = "8px";
       comment.style.width = "100%";
       container.appendChild(comment);
     }
     comment.style.display = "";
-    comment.required = true;
+    comment.required = false; // jamais obligatoire
   } else if (comment) {
     comment.required = false;
     comment.style.display = "none";
   }
 }
 
-/* ================== SOUMISSION ================== */
+/* ================== SOUMISSION (AUCUNE CONTRAINTE) ================== */
 const form = document.getElementById("formEval");
 if (form) {
   form.addEventListener("submit", async (e) => {
@@ -173,7 +171,8 @@ if (form) {
     const chantier      = (champChantier?.value || "").trim();
     const ouvrierId     = selectOuvrier?.value || "";
     const ouvrier       = OUVRIERS.find(x => (x.matricule ?? "").toString() === ouvrierId);
-    const nomComplet    = ouvrier ? `${(ouvrier.nom||"").toUpperCase()} ${(ouvrier.prenom||"").toUpperCase()} (Mat. ${(ouvrier.matricule||"")})` : "";
+    const nomComplet    = ouvrier ? `${(ouvrier.nom||"").toUpperCase()} ${(ouvrier.prenom||"").toUpperCase()} (Mat. ${(ouvrier.matricule||"")})`
+                                  : (selectOuvrier && selectOuvrier.options[selectOuvrier.selectedIndex]?.text || "");
 
     const metier        = selectMetier?.value || "";
     const dateNaissance = inputNaissance?.value || "";
@@ -191,30 +190,15 @@ if (form) {
     const remarques   = (areaRemarques?.value || "").trim();
     const accidents   = (areaAccidents?.value || "").trim();
 
-    const luEval   = document.getElementById("luEval")?.checked || false;
-    const luEvalue = document.getElementById("luEvalue")?.checked || false;
+    const luEval   = document.getElementById("luEval")?.checked ? "Oui" : "Non";
+    const luEvalue = document.getElementById("luEvalue")?.checked ? "Oui" : "Non";
 
-    // Champs obligatoires communs
-    if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
-      alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
-      return;
-    }
-
-    // Questions + commentaires
-    let questionsCompletes = true;
-    let commentairesOK = true;
+    // Pas d'exigence: on accepte même si rien n'est rempli
     const evaluations = [];
     document.querySelectorAll(".question").forEach(div => {
       const critere  = div.dataset.question;
       const selected = div.querySelector(".selected");
-      if (!selected) questionsCompletes = false;
-
-      const idx = selected ? Number(selected.dataset.index) : -1;
       const autoComment = div.querySelector(".auto-comment");
-      if ((idx === 3 || idx === 4) && (!autoComment || autoComment.value.trim() === "")) {
-        commentairesOK = false;
-      }
-
       evaluations.push({
         critere,
         emoji: selected ? selected.dataset.icon  : "",
@@ -223,17 +207,8 @@ if (form) {
       });
     });
 
-    if (!questionsCompletes) {
-      alert("❌ Veuillez répondre à toutes les questions d'évaluation.");
-      return;
-    }
-    if (!commentairesOK) {
-      alert("❌ Pour toute note Insuffisant/Mauvais, un commentaire est obligatoire.");
-      return;
-    }
-
     const result = {
-      type: EVAL_TYPE, // "annuelle" | "periodique"
+      type: EVAL_TYPE,
       chantier,
       ouvrier: nomComplet,
       metier,
@@ -245,16 +220,17 @@ if (form) {
       commentaire,
       fonctions,
       aspirations, formations, objectifs, remarques, accidents,
-      approbateur: luEval ? "Oui" : "Non",
-      evalue:      luEvalue ? "Oui" : "Non",
+      approbateur: luEval,
+      evalue:      luEvalue,
       evaluation:  evaluations
     };
 
+    // Aperçu écran
     afficherResultat(result);
 
     try {
       // PDF
-      const fileName = `${sanitizeFileName(nomComplet || "ouvrier")}_${sanitizeFileName(metier)}_${EVAL_TYPE}.pdf`;
+      const fileName = `${sanitizeFileName(nomComplet || "ouvrier")}_${sanitizeFileName(metier || "metier")}_${EVAL_TYPE}.pdf`;
       const doc = buildPdfWithJsPDF(result);
       const base64 = pdfBase64FromDoc(doc);
 
@@ -269,7 +245,7 @@ if (form) {
 
       const typeLabel = (EVAL_TYPE === "periodique" ? "Périodique" : "Annuelle");
       const payload = {
-        subject:  `Évaluation ${typeLabel} - ${nomComplet} (${metier}) – ${dateEval}`,
+        subject:  `Évaluation ${typeLabel} - ${nomComplet || "NC"} (${metier || "NC"}) – ${dateEval || "NC"}`,
         filename: fileName,
         pdfBase64: base64,
         data: {
@@ -288,7 +264,7 @@ if (form) {
         console.error("Flow error:", resp.status, text);
         alert(`❌ Échec envoi au Flow (HTTP ${resp.status}).\n${text.slice(0,600)}`);
         return;
-        }
+      }
       alert("✅ Évaluation envoyée par e-mail avec le PDF en pièce jointe !");
     } catch (err) {
       console.error(err);
@@ -307,12 +283,11 @@ function afficherResultat(d) {
   if (d.date_naissance) html += `<strong>Date de naissance :</strong> ${escapeHtml(d.date_naissance)}<br>`;
   if (d.qualification)  html += `<strong>Qualification :</strong> ${escapeHtml(d.qualification)}<br>`;
   if (d.date_entree)    html += `<strong>Date d’entrée :</strong> ${escapeHtml(d.date_entree)}<br>`;
-  html += `<strong>Date de l’évaluation :</strong> ${escapeHtml(d.date_eval)}<br>`;
-  html += `<strong>Initial de l’évaluateur :</strong> ${escapeHtml(d.initial_evaluateur)}<br><br>`;
-
-  html += `<strong>Critères :</strong><br>`;
+  if (d.date_eval)      html += `<strong>Date de l’évaluation :</strong> ${escapeHtml(d.date_eval)}<br>`;
+  if (d.initial_evaluateur) html += `<strong>Initial de l’évaluateur :</strong> ${escapeHtml(d.initial_evaluateur)}<br>`;
+  html += `<br><strong>Critères :</strong><br>`;
   d.evaluation.forEach(row => {
-    html += `• ${escapeHtml(row.critere)} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong>`;
+    html += `• ${escapeHtml(row.critere || "")} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong>`;
     if (row.commentaire) html += `<br><em>Commentaire :</em> ${escapeHtml(row.commentaire)}`;
     html += `<br>`;
   });
@@ -327,8 +302,8 @@ function afficherResultat(d) {
     if (d.remarques)   html += `<strong>Remarques :</strong> ${escapeHtml(d.remarques)}<br>`;
     if (d.accidents)   html += `<strong>Accidents :</strong> ${escapeHtml(d.accidents)}<br>`;
   }
-  html += `<strong>Évaluateur lu et approuvé :</strong> ${escapeHtml(d.approbateur)}<br>`;
-  html += `<strong>Évalué lu et approuvé :</strong> ${escapeHtml(d.evalue)}<br>`;
+  if (d.approbateur) html += `<strong>Évaluateur lu et approuvé :</strong> ${escapeHtml(d.approbateur)}<br>`;
+  if (d.evalue)      html += `<strong>Évalué lu et approuvé :</strong> ${escapeHtml(d.evalue)}<br>`;
 
   resultatDiv.innerHTML = html;
   resultatDiv.style.display = "block";
@@ -354,6 +329,7 @@ function buildPdfWithJsPDF(d) {
   doc.setFontSize(11);
 
   const info = (label, val) => {
+    if (!val) return; // n’imprime pas les champs vides
     newPageIfNeeded(16);
     doc.setFont('helvetica','bold'); doc.text(label + " ", margin, y);
     const w = doc.getTextWidth(label + " ");
@@ -364,9 +340,9 @@ function buildPdfWithJsPDF(d) {
   info("N° de chantier + nom :", d.chantier);
   info("Ouvrier :", d.ouvrier);
   info("Métier :", d.metier);
-  if (d.date_naissance) info("Date de naissance :", d.date_naissance);
-  if (d.qualification)  info("Qualification :", d.qualification);
-  if (d.date_entree)    info("Date d’entrée :", d.date_entree);
+  info("Date de naissance :", d.date_naissance);
+  info("Qualification :", d.qualification);
+  info("Date d’entrée :", d.date_entree);
   info("Date de l’évaluation :", d.date_eval);
   info("Initial de l’évaluateur :", d.initial_evaluateur);
   info("Évaluateur lu et approuvé :", d.approbateur);
@@ -376,7 +352,7 @@ function buildPdfWithJsPDF(d) {
 
   section("Critères d’évaluation");
   tableHeader(["Critère", "Appréciation", "Commentaire"], [360, 120, 150]);
-  d.evaluation.forEach(row => {
+  (d.evaluation || []).forEach(row => {
     tableRow([String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")], [360, 120, 150]);
   });
 
@@ -385,16 +361,19 @@ function buildPdfWithJsPDF(d) {
     y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
   }
 
-  section("Complément d’évaluation");
-  let comp = `• Fonctions exercées sur le chantier : ${d.fonctions || ""}`;
+  const compLines = [];
+  if (d.fonctions)  compLines.push(`• Fonctions exercées sur le chantier : ${d.fonctions}`);
   if (d.type === "annuelle") {
-    comp += `\n• Aspirations : ${d.aspirations || ""}`;
-    comp += `\n• Formations : ${d.formations || ""}`;
-    comp += `\n• Objectifs : ${d.objectifs || ""}`;
-    comp += `\n• Remarques : ${d.remarques || ""}`;
-    comp += `\n• Accidents : ${d.accidents || ""}`;
+    if (d.aspirations) compLines.push(`• Aspirations : ${d.aspirations}`);
+    if (d.formations)  compLines.push(`• Formations : ${d.formations}`);
+    if (d.objectifs)   compLines.push(`• Objectifs : ${d.objectifs}`);
+    if (d.remarques)   compLines.push(`• Remarques : ${d.remarques}`);
+    if (d.accidents)   compLines.push(`• Accidents : ${d.accidents}`);
   }
-  y = multiText(comp, margin, y, pageW - margin*2);
+  if (compLines.length) {
+    section("Complément d’évaluation");
+    y = multiText(compLines.join("\n"), margin, y, pageW - margin*2);
+  }
 
   return doc;
 
@@ -449,10 +428,10 @@ function base64FromArrayBuffer(buffer) {
   return btoa(binary);
 }
 function buildEmailHtml(d){
-  const rows = d.evaluation.map(r =>
+  const rows = (d.evaluation || []).map(r =>
     `<tr>
-      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.critere)}</td>
-      <td style="padding:4px 8px;border-bottom:1px solid #eee"><b>${escapeHtml(r.note)}</b></td>
+      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.critere || "")}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid #eee"><b>${escapeHtml(r.note || "")}</b></td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.commentaire || "")}</td>
     </tr>`
   ).join("");
@@ -460,12 +439,13 @@ function buildEmailHtml(d){
   <div style="font-family:Arial,sans-serif;line-height:1.45;color:#111">
     <h2 style="margin:0 0 12px">Évaluation ${d.type === "periodique" ? "périodique" : "annuelle"}</h2>
     <p>
-       <b>N° de chantier + nom :</b> ${escapeHtml(d.chantier)}<br>
-       <b>Ouvrier :</b> ${escapeHtml(d.ouvrier)}<br>
-       <b>Métier :</b> ${escapeHtml(d.metier)}<br>
-       <b>Date :</b> ${escapeHtml(d.date_eval)}<br>
-       <b>Initial évaluateur :</b> ${escapeHtml(d.initial_evaluateur)}
+       <b>N° de chantier + nom :</b> ${escapeHtml(d.chantier || "")}<br>
+       <b>Ouvrier :</b> ${escapeHtml(d.ouvrier || "")}<br>
+       <b>Métier :</b> ${escapeHtml(d.metier || "")}<br>
+       <b>Date :</b> ${escapeHtml(d.date_eval || "")}<br>
+       <b>Initial évaluateur :</b> ${escapeHtml(d.initial_evaluateur || "")}
     </p>
+    ${rows ? `
     <h3 style="margin:16px 0 8px">Critères</h3>
     <table style="border-collapse:collapse;width:100%">
       <thead>
@@ -476,18 +456,19 @@ function buildEmailHtml(d){
         </tr>
       </thead>
       <tbody>${rows}</tbody>
-    </table>
+    </table>` : ``}
     <h3 style="margin:16px 0 8px">Complément</h3>
     <ul>
-      <li><b>Fonctions exercées sur le chantier :</b> ${escapeHtml(d.fonctions || "")}</li>
+      ${d.fonctions ? `<li><b>Fonctions exercées sur le chantier :</b> ${escapeHtml(d.fonctions)}</li>` : ``}
       ${d.type === "annuelle" ? `
-        <li><b>Aspirations :</b> ${escapeHtml(d.aspirations || "")}</li>
-        <li><b>Formations :</b> ${escapeHtml(d.formations || "")}</li>
-        <li><b>Objectifs :</b> ${escapeHtml(d.objectifs || "")}</li>
-        <li><b>Remarques :</b> ${escapeHtml(d.remarques || "")}</li>
-        <li><b>Accidents :</b> ${escapeHtml(d.accidents || "")}</li>` : ``}
-      <li><b>Évaluateur lu et approuvé :</b> ${escapeHtml(d.approbateur)}</li>
-      <li><b>Évalué lu et approuvé :</b> ${escapeHtml(d.evalue)}</li>
+        ${d.aspirations ? `<li><b>Aspirations :</b> ${escapeHtml(d.aspirations)}</li>` : ``}
+        ${d.formations ? `<li><b>Formations :</b> ${escapeHtml(d.formations)}</li>` : ``}
+        ${d.objectifs ? `<li><b>Objectifs :</b> ${escapeHtml(d.objectifs)}</li>` : ``}
+        ${d.remarques ? `<li><b>Remarques :</b> ${escapeHtml(d.remarques)}</li>` : ``}
+        ${d.accidents ? `<li><b>Accidents :</b> ${escapeHtml(d.accidents)}</li>` : ``}
+      ` : ``}
+      ${d.approbateur ? `<li><b>Évaluateur lu et approuvé :</b> ${escapeHtml(d.approbateur)}</li>` : ``}
+      ${d.evalue ? `<li><b>Évalué lu et approuvé :</b> ${escapeHtml(d.evalue)}</li>` : ``}
     </ul>
     <hr><p>📎 Le PDF complet est joint.</p>
   </div>`;
@@ -507,7 +488,7 @@ function normalizeDate(v){
 
 /* ================== INIT ================== */
 document.addEventListener("DOMContentLoaded", () => {
-  chargerOuvriers(); // remplit la liste
+  chargerOuvriers();
   const today = new Date().toISOString().slice(0, 10);
   if (inputDateEval && !inputDateEval.value) inputDateEval.value = today;
 });
