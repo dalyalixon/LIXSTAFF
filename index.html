@@ -3,124 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LixStaff – Évaluation du personnel</title>
+  <title>LixStaff – Accueil</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #f97316;
+      color: white;
+      text-align: center;
+      padding: 1.2rem 0;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      text-align: center;
+      width: 320px;
+    }
+    button {
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      width: 100%;
+    }
+    button:hover {
+      background: #ea580c;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+      padding: 1rem 0;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>LixStaff – Évaluation du personnel</h1>
+    <h1>LixStaff – Évaluations du personnel</h1>
   </header>
 
-  <main class="container">
-    <form id="formEval">
-      <div class="card">
-        <h2>Identification</h2>
-
-        <!-- 0) N° de chantier + nom -->
-        <label for="chantier">N° de chantier + nom</label>
-        <input type="text" id="chantier" placeholder="Ex : 24031 – Tunnel Albert" required />
-
-        <!-- 1) Ouvrier (liste déroulante) -->
-        <label for="ouvrierSelect">Ouvrier</label>
-        <select id="ouvrierSelect" required>
-          <option value="">Sélectionnez un ouvrier…</option>
-          <!-- rempli par script.js ou via ouvriers.js -->
-        </select>
-
-        <!-- 2) Date de naissance (facultatif) -->
-        <label for="dateNaissance">Date de naissance</label>
-        <input type="date" id="dateNaissance" />
-
-        <!-- 3) Qualification (autofill si dispo) -->
-        <label for="qualification">Qualification</label>
-        <input type="text" id="qualification" placeholder="Qualification actuelle" />
-
-        <!-- 4) Date d’entrée (autofill si dispo) -->
-        <label for="dateEntree">Date d’entrée</label>
-        <input type="date" id="dateEntree" />
-
-        <!-- 5) Date de l’évaluation -->
-        <label for="dateEvaluation">Date de l’évaluation</label>
-        <input type="date" id="dateEvaluation" required />
-
-        <!-- 6) Initial de l’évaluateur -->
-        <label for="initialEval">Initial de l’évaluateur</label>
-        <input type="text" id="initialEval" placeholder="Ex : DH" required />
-
-        <!-- 7) Métier -->
-        <label for="selectMetier">Métier</label>
-        <select id="selectMetier" required>
-          <option value="">Sélectionnez un métier</option>
-        </select>
+  <main>
+    <div class="card">
+      <h2>Choisir le type d’évaluation</h2>
+      <p>Sélectionnez le formulaire que vous souhaitez remplir :</p>
+      <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1.5rem;">
+        <button onclick="location.href='annuel.html'">Évaluation annuelle</button>
+        <button onclick="location.href='periodique.html'">Évaluation périodique</button>
       </div>
-
-      <div class="card" id="questionsContainer" style="display:none;">
-        <h2>Critères d’évaluation</h2>
-        <div id="questionsList"></div>
-      </div>
-
-      <div class="card" id="ficheComplementaire" style="display:none;">
-        <h2>Complément d’évaluation</h2>
-
-        <!-- Tous ces champs sont NON obligatoires -->
-        <label for="fonctions">Fonctions exercées sur le chantier</label>
-        <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
-
-        <label for="aspirations">Aspirations professionnelles</label>
-        <textarea id="aspirations" placeholder="Aspirations professionnelles…"></textarea>
-
-        <label for="formations">Formations souhaitées</label>
-        <textarea id="formations" placeholder="Formations souhaitées…"></textarea>
-
-        <label for="objectifs">Objectifs d’amélioration</label>
-        <textarea id="objectifs" placeholder="Objectifs d'amélioration…"></textarea>
-
-        <label for="remarques">Remarques</label>
-        <textarea id="remarques" placeholder="Remarques…"></textarea>
-
-        <label for="accidents">Accidents, incidents</label>
-        <textarea id="accidents" placeholder="Accidents, incidents…"></textarea>
-      </div>
-
-      <div class="card" id="commentaireSection" style="display:none;">
-        <h2>Validation et Commentaires</h2>
-
-        <label for="commentaire">Commentaire général</label>
-        <textarea id="commentaire" placeholder="Observations, remarques…"></textarea>
-
-        <div class="checkbox-row">
-          <label><input type="checkbox" id="luEval" required /> Évaluateur : Lu et approuvé</label>
-          <label><input type="checkbox" id="luEvalue" required /> Évalué : Lu et approuvé</label>
-        </div>
-
-        <div class="actions-row">
-          <button type="submit">Soumettre l’évaluation</button>
-          <button type="button" id="btnDownload" style="display:none">Télécharger le PDF</button>
-        </div>
-      </div>
-    </form>
-
-    <div class="card" id="resultat" style="display:none;"></div>
+    </div>
   </main>
 
-  <!-- Scripts (ordre important) -->
-  <script src="questions.js"></script>
-  <script src="ouvriers.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
-  <script src="script.js"></script>
-
-  <!-- Shim pour pré-remplir la liste si ouvriers.js est déjà chargé -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      try {
-        const select = document.getElementById('ouvrierSelect');
-        if (window.OUVRIERS && Array.isArray(window.OUVRIERS) && select && select.options.length <= 1) {
-          if (typeof window.remplirSelectOuvriers === 'function') {
-            window.remplirSelectOuvriers(window.OUVRIERS);
-          }
-        }
-      } catch (e) { /* no-op */ }
-    });
-  </script>
+  <footer>
+    © 2025 LixStaff – Tous droits réservés
+  </footer>
 </body>
 </html>
