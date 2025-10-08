@@ -7,9 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-type="annuelle">
-  <header>
-    <h1>LixStaff – Évaluation annuelle</h1>
-  </header>
+  <header><h1>LixStaff – Évaluation annuelle</h1></header>
 
   <main class="container">
     <form id="formEval">
@@ -52,6 +50,7 @@
 
       <div class="card" id="ficheComplementaire" style="display:none;">
         <h2>Complément d’évaluation</h2>
+
         <label for="fonctions">Fonctions exercées sur le chantier</label>
         <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
 
@@ -92,19 +91,17 @@
     <div class="card" id="resultat" style="display:none;"></div>
   </main>
 
-  <!-- Scripts -->
+  <!-- Scripts (ordre important) -->
   <script src="questions.js"></script>
-  <script src="ouvriers.js?v=2"></script>
+  <script src="./ouvriers.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
-  <script src="script.js"></script>
+  <script src="./script.js?v=3"></script>
 
-  <!-- Shim : si window.OUVRIERS est déjà là, on remplit tout de suite -->
+  <!-- Force le remplissage si OUVRIERS est déjà chargé -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.OUVRIERS && Array.isArray(window.OUVRIERS) && window.OUVRIERS.length) {
-        if (typeof window.remplirSelectOuvriers === 'function') {
-          window.remplirSelectOuvriers(window.OUVRIERS);
-        }
+      if (Array.isArray(window.OUVRIERS) && window.OUVRIERS.length && typeof window.remplirSelectOuvriers === 'function') {
+        window.remplirSelectOuvriers(window.OUVRIERS);
       }
     });
   </script>
