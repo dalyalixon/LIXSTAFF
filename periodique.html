@@ -6,7 +6,6 @@
   <title>LixStaff – Évaluation périodique</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<!-- data-type="periodique" -->
 <body data-type="periodique">
   <header>
     <h1>LixStaff – Évaluation périodique</h1>
@@ -51,15 +50,11 @@
         <div id="questionsList"></div>
       </div>
 
-      <!-- Périodique : on VA JUSQU’À Fonctions… INCLUS -->
+      <!-- Périodique : jusqu’à "Fonctions…" inclus -->
       <div class="card" id="ficheComplementaire" style="display:none;">
         <h2>Complément d’évaluation</h2>
-
         <label for="fonctions">Fonctions exercées sur le chantier</label>
         <textarea id="fonctions" placeholder="Fonctions exercées sur le chantier…"></textarea>
-
-        <!-- ⚠️ On SUPPRIME les champs suivants pour la périodique:
-             aspirations, formations, objectifs, remarques, accidents -->
       </div>
 
       <div class="card" id="commentaireSection" style="display:none;">
@@ -85,8 +80,19 @@
 
   <!-- Scripts -->
   <script src="questions.js"></script>
-  <script src="ouvriers.js"></script>
+  <script src="ouvriers.js?v=2"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="script.js"></script>
+
+  <!-- Shim remplissage immédiat si dispo -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.OUVRIERS && Array.isArray(window.OUVRIERS) && window.OUVRIERS.length) {
+        if (typeof window.remplirSelectOuvriers === 'function') {
+          window.remplirSelectOuvriers(window.OUVRIERS);
+        }
+      }
+    });
+  </script>
 </body>
 </html>
