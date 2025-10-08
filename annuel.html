@@ -15,10 +15,10 @@
         <h2>Identification</h2>
 
         <label for="chantier">N° de chantier + nom</label>
-        <input type="text" id="chantier" placeholder="Ex : 24031 – Tunnel Albert" required />
+        <input type="text" id="chantier" placeholder="Ex : 24031 – Tunnel Albert" />
 
         <label for="ouvrierSelect">Ouvrier</label>
-        <select id="ouvrierSelect" required>
+        <select id="ouvrierSelect">
           <option value="">Sélectionnez un ouvrier…</option>
         </select>
 
@@ -32,13 +32,13 @@
         <input type="date" id="dateEntree" />
 
         <label for="dateEvaluation">Date de l’évaluation</label>
-        <input type="date" id="dateEvaluation" required />
+        <input type="date" id="dateEvaluation" />
 
         <label for="initialEval">Initial de l’évaluateur</label>
-        <input type="text" id="initialEval" placeholder="Ex : DH" required />
+        <input type="text" id="initialEval" placeholder="Ex : DH" />
 
         <label for="selectMetier">Métier</label>
-        <select id="selectMetier" required>
+        <select id="selectMetier">
           <option value="">Sélectionnez un métier</option>
         </select>
       </div>
@@ -77,8 +77,8 @@
         <textarea id="commentaire" placeholder="Observations, remarques…"></textarea>
 
         <div class="checkbox-row">
-          <label><input type="checkbox" id="luEval" required /> Évaluateur : Lu et approuvé</label>
-          <label><input type="checkbox" id="luEvalue" required /> Évalué : Lu et approuvé</label>
+          <label><input type="checkbox" id="luEval" /> Évaluateur : Lu et approuvé</label>
+          <label><input type="checkbox" id="luEvalue" /> Évalué : Lu et approuvé</label>
         </div>
 
         <div class="actions-row">
@@ -93,11 +93,10 @@
 
   <!-- Scripts (ordre important) -->
   <script src="questions.js"></script>
-  <script src="./ouvriers.js?v=3"></script>
+  <script src="./ouvriers.js?v=4"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
-  <script src="./script.js?v=3"></script>
+  <script src="./script.js?v=4"></script>
 
-  <!-- Force le remplissage si OUVRIERS est déjà chargé -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (Array.isArray(window.OUVRIERS) && window.OUVRIERS.length && typeof window.remplirSelectOuvriers === 'function') {
