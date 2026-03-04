@@ -111,7 +111,7 @@ selectMetier.addEventListener("change", () => {
         span.onclick = () => {
           scale.querySelectorAll("span").forEach(s => s.classList.remove("selected"));
           span.classList.add("selected");
-          handleAutoComment(qDiv, i);
+          handleAutoComment(qDiv, i); // ✅ désactivé plus bas
         };
         scale.appendChild(span);
       });
@@ -122,33 +122,20 @@ selectMetier.addEventListener("change", () => {
     });
 
     questionsContainer.style.display = "block";
-    commentaireSection.style.display  = "none";   // ✅ MODIF : on enlève la case commentaire à droite
+    commentaireSection.style.display  = "none";   // ✅ on cache la case commentaire à droite
     ficheComplementaire.style.display = "block";
   } else {
     questionsContainer.style.display = "none";
-    commentaireSection.style.display  = "none";   // (déjà masqué)
+    commentaireSection.style.display  = "none";
     ficheComplementaire.style.display = "none";
   }
 });
 
-/* ================== COMMENTAIRE AUTO SI NOTE BASSE ================== */
+/* ================== COMMENTAIRE AUTO (DÉSACTIVÉ) ================== */
 function handleAutoComment(container, index) {
-  let comment = container.querySelector(".auto-comment");
-  if (index === 3 || index === 4) {
-    if (!comment) {
-      comment = document.createElement("textarea");
-      comment.className = "auto-comment";
-      comment.placeholder = "Commentaire obligatoire (note insuffisante/mauvaise)…";
-      comment.style.marginTop = "8px";
-      comment.style.width = "100%";
-      container.appendChild(comment);
-    }
-    comment.style.display = "";
-    comment.required = true;
-  } else if (comment) {
-    comment.required = false;
-    comment.style.display = "none";
-  }
+  // ✅ On enlève toute zone "Commentaire obligatoire..." et on n'en crée plus
+  const comment = container.querySelector(".auto-comment");
+  if (comment) comment.remove();
 }
 
 /* ================== SOUMISSION ================== */
@@ -167,7 +154,8 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
   const dateEval      = inputDateEval.value;
   const initialEval   = inputInitial.value.trim();
 
-  const commentaire   = document.getElementById("commentaire").value.trim();
+  // ✅ case commentaire à droite cachée => on n'en tient pas compte
+  const commentaire = "";
 
   const fonctions     = document.getElementById("fonctions").value.trim();
   const aspirations   = document.getElementById("aspirations").value.trim();
@@ -185,36 +173,24 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     return;
   }
 
-  // Vérifier les questions + commentaires requis pour notes basses
+  // Vérifier les questions (sans commentaire obligatoire)
   let questionsCompletes = true;
-  let commentairesOK = true;
   const evaluations = [];
   document.querySelectorAll(".question").forEach(div => {
     const critere  = div.dataset.question;
     const selected = div.querySelector(".selected");
     if (!selected) questionsCompletes = false;
 
-    const idx = selected ? Number(selected.dataset.index) : -1;
-    const autoComment = div.querySelector(".auto-comment");
-    if ((idx === 3 || idx === 4) && (!autoComment || autoComment.value.trim() === "")) {
-      commentairesOK = false;
-      if (autoComment) autoComment.reportValidity?.();
-    }
-
     evaluations.push({
       critere,
       emoji: selected ? selected.dataset.icon  : "",
       note:  selected ? selected.dataset.value : "Non noté",
-      commentaire: autoComment ? autoComment.value.trim() : ""
+      commentaire: "" // ✅ désactivé
     });
   });
 
   if (!questionsCompletes) {
     alert("❌ Veuillez répondre à toutes les questions d'évaluation.");
-    return;
-  }
-  if (!commentairesOK) {
-    alert("❌ Pour toute note Insuffisant/Mauvais, un commentaire est obligatoire.");
     return;
   }
 
@@ -227,7 +203,7 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
     date_entree: dateEntree,
     date_eval: dateEval,
     initial_evaluateur: initialEval,
-    commentaire,
+    commentaire, // (vide)
     fonctions,
     aspirations,
     formations,
@@ -267,7 +243,7 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
         metier,
         date_eval: dateEval,
         initial_evaluateur: initialEval,
-        commentaire,
+        commentaire, // (vide)
         fonctions, aspirations, formations, objectifs, remarques, accidents,
         approbateur: result.approbateur,
         evalue: result.evalue,
@@ -317,12 +293,9 @@ function afficherResultat(d) {
 
   html += `<strong>Critères :</strong><br>`;
   d.evaluation.forEach(row => {
-    html += `• ${escapeHtml(row.critere)} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong>`;
-    if (row.commentaire) html += `<br><em>Commentaire :</em> ${escapeHtml(row.commentaire)}`;
-    html += `<br>`;
+    html += `• ${escapeHtml(row.critere)} : <strong>${escapeHtml(row.emoji)} ${escapeHtml(row.note)}</strong><br>`;
   });
 
-  if (d.commentaire) html += `<br><strong>Commentaire général :</strong><br>${nl2br(escapeHtml(d.commentaire))}<br>`;
   html += `<br><strong>Compléments :</strong><br>`;
   if (d.fonctions)  html += `<strong>Fonctions exercées sur le chantier :</strong> ${escapeHtml(d.fonctions)}<br>`;
   if (d.aspirations)html += `<strong>Aspirations :</strong> ${escapeHtml(d.aspirations)}<br>`;
@@ -379,15 +352,10 @@ function buildPdfWithJsPDF(d) {
   y += 8;
 
   section("Critères d’évaluation");
-  tableHeader(["Critère", "Appréciation", "Commentaire"], [360, 120, 150]);
+  tableHeader(["Critère", "Appréciation"], [430, 200]); // ✅ plus de colonne commentaire
   d.evaluation.forEach(row => {
-    tableRow([String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")], [360, 120, 150]);
+    tableRow([String(row.critere || ""), String(row.note || "")], [430, 200]);
   });
-
-  if (d.commentaire) {
-    section("Commentaire général");
-    y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
-  }
 
   section("Complément d’évaluation");
   y = multiText(
@@ -460,7 +428,6 @@ function buildEmailHtml(d){
     `<tr>
       <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.critere)}</td>
       <td style="padding:4px 8px;border-bottom:1px solid #eee"><b>${escapeHtml(r.note)}</b></td>
-      <td style="padding:4px 8px;border-bottom:1px solid #eee">${escapeHtml(r.commentaire || "")}</td>
     </tr>`
   ).join("");
   return `
@@ -479,12 +446,10 @@ function buildEmailHtml(d){
         <tr>
           <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Critère</th>
           <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Appréciation</th>
-          <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Commentaire</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
-    ${d.commentaire ? `<h3 style="margin:16px 0 8px">Commentaire général</h3><p>${nl2br(escapeHtml(d.commentaire))}</p>` : ""}
     <h3 style="margin:16px 0 8px">Complément</h3>
     <ul>
       <li><b>Fonctions exercées sur le chantier :</b> ${escapeHtml(d.fonctions || "")}</li>
@@ -501,7 +466,7 @@ function buildEmailHtml(d){
 }
 
 /* ================== HELPERS ================== */
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]))}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;"," >":"&gt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m] || m))}
 function nl2br(s){return String(s).replace(/\n/g,"<br>")}
 function sanitizeFileName(s){return String(s).replace(/[\\/:*?"<>|]/g,"_").replace(/\s+/g,"_")}
 function normalizeDate(v){
@@ -516,13 +481,11 @@ function normalizeDate(v){
 
 /* ================== INITIALISATION ================== */
 document.addEventListener("DOMContentLoaded", () => {
-  // Charger la liste des ouvriers
   chargerOuvriers();
 
-  // ✅ sécurité : même au chargement, on cache la section commentaire à droite
+  // ✅ on cache la section commentaire à droite dès le chargement
   if (commentaireSection) commentaireSection.style.display = "none";
 
-  // Mettre automatiquement la date du jour dans "Date de l’évaluation"
   const today = new Date().toISOString().slice(0, 10);
   if (inputDateEval && !inputDateEval.value) {
     inputDateEval.value = today;
