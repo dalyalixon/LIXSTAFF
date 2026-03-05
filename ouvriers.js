@@ -46,15 +46,6 @@ window.OUVRIERS = [
     "fonction": "Maçons"
   },
   {
-    "matricule": "1227",
-    "nom": "FIORINO",
-    "prenom": "ROCCO",
-    "naissance": "1965-12-02",
-    "entree": "1992-05-11",
-    "qualif": "4",
-    "fonction": "Grutiers"
-  },
-  {
     "matricule": "1334",
     "nom": "SELASSI",
     "prenom": "YOUSSEF",
@@ -98,15 +89,6 @@ window.OUVRIERS = [
     "entree": "1998-10-01",
     "qualif": "3",
     "fonction": "Maçons"
-  },
-  {
-    "matricule": "1495",
-    "nom": "NOR",
-    "prenom": "MOHAMED",
-    "naissance": "1961-07-25",
-    "entree": "1999-09-20",
-    "qualif": "4",
-    "fonction": "Coffreurs"
   },
   {
     "matricule": "1505",
@@ -637,6 +619,24 @@ window.OUVRIERS = [
     "naissance": "1992-02-29",
     "entree": "2025-10-01",
     "qualif": "3",
+    "fonction": "Maçons"
+   },
+   {
+    "matricule": "1760",
+    "nom": "CAUCHIE",
+    "prenom": "ERIC",
+    "naissance": "1973-03-08",
+    "entree": "2026-02-10",
+    "qualif": "3",
+    "fonction": "Chauffeurs"
+  },
+  {
+    "matricule": "1761",
+    "nom": "VRAY",
+    "prenom": "MAXIME",
+    "naissance": "2004-06-24",
+    "entree": "2026-02-16",
+    "qualif": "2",
     "fonction": "Maçons"
   }
 ];
