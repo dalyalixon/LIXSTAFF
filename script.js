@@ -170,7 +170,6 @@ document.getElementById("formEval").addEventListener("submit", async (e) => {
   const commentaire   = document.getElementById("commentaire").value.trim();
 
   const fonctions     = document.getElementById("fonctions").value.trim();
-  const aspirations   = document.getElementById("aspirations").value.trim();
   const formations    = document.getElementById("formations").value.trim();
   const objectifs     = document.getElementById("objectifs").value.trim();
   const remarques     = document.getElementById("remarques").value.trim();
