@@ -594,7 +594,7 @@ window.OUVRIERS = [
     "qualif": "3",
     "fonction": "Maçons"
   },
-  {
+    {
     "matricule": "1759",
     "nom": "HULIN",
     "prenom": "SEBASTIEN",
@@ -602,7 +602,7 @@ window.OUVRIERS = [
     "entree": "2025-10-01",
     "qualif": "3",
     "fonction": "Maçons"
-   },
+  },
   {
     "matricule": "1761",
     "nom": "VRAY",
@@ -611,23 +611,23 @@ window.OUVRIERS = [
     "entree": "2026-02-16",
     "qualif": "2",
     "fonction": "Maçons"
-  }
+  },
   {
     "matricule": "1762",
     "nom": "ANTONNEAU",
     "prenom": "FANNY",
-    "naissance": "1993-03.04",
+    "naissance": "1993-03-04",
     "entree": "2026-04-01",
     "qualif": "2",
-    "fonction": "Chauffeur"
-  }
-    {
+    "fonction": "Chauffeurs"
+  },
+  {
     "matricule": "1763",
     "nom": "ALYA",
     "prenom": "MOHAREM",
-    "naissance": "2000-01.27",
+    "naissance": "2000-01-27",
     "entree": "2026-04-13",
     "qualif": "2",
-    "fonction": "Electromecanicien"
+    "fonction": "Electromécaniciens"
   }
 ];
