@@ -191,8 +191,9 @@ const luEvalue = document.getElementById("luEvalue")
 
   // Champs vraiment obligatoires
  // Champs vraiment obligatoires
-if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
-  alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
+// Champs vraiment obligatoires
+if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval) {
+  alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher la validation de l’évaluateur.");
   return;
 }
 
