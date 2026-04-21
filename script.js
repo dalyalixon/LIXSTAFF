@@ -190,10 +190,11 @@ const luEvalue = document.getElementById("luEvalue")
   : false;
 
   // Champs vraiment obligatoires
-  if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
-    alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
-    return;
-  }
+ // Champs vraiment obligatoires
+if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
+  alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher les validations.");
+  return;
+}
 
   // Vérifier les questions + commentaires requis pour notes basses
   let questionsCompletes = true;
