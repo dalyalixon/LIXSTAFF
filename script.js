@@ -181,8 +181,13 @@ const objectifs   = getValue("objectifs");
 const remarques   = getValue("remarques");
 const accidents   = getValue("accidents");
 
-const luEval   = document.getElementById("luEval") ? document.getElementById("luEval").checked : false;
-const luEvalue = document.getElementById("luEvalue") ? document.getElementById("luEvalue").checked : false;
+const luEval = document.getElementById("luEval")
+  ? document.getElementById("luEval").checked
+  : false;
+
+const luEvalue = document.getElementById("luEvalue")
+  ? document.getElementById("luEvalue").checked
+  : false;
 
   // Champs vraiment obligatoires
   if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval || !luEvalue) {
