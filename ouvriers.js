@@ -532,15 +532,6 @@ window.OUVRIERS = [
     "fonction": "Grutiers"
   },
   {
-    "matricule": "1750",
-    "nom": "PARFONRY",
-    "prenom": "THIBAUT",
-    "naissance": "1995-12-28",
-    "entree": "2025-03-19",
-    "qualif": "6",
-    "fonction": "Electricien"
-  },
-  {
     "matricule": "1751",
     "nom": "POLIMENI",
     "prenom": "GIOVANNI",
@@ -595,15 +586,6 @@ window.OUVRIERS = [
     "fonction": "PFI"
   },
   {
-    "matricule": "1757",
-    "nom": "VILLAREALE",
-    "prenom": "ROMAIN",
-    "naissance": "1991-12-29",
-    "entree": "2025-09-01",
-    "qualif": "2",
-    "fonction": "Chauffeurs"
-  },
-  {
     "matricule": "1758",
     "nom": "KUBAN",
     "prenom": "ADRIEN",
@@ -621,15 +603,6 @@ window.OUVRIERS = [
     "qualif": "3",
     "fonction": "Maçons"
    },
-   {
-    "matricule": "1760",
-    "nom": "CAUCHIE",
-    "prenom": "ERIC",
-    "naissance": "1973-03-08",
-    "entree": "2026-02-10",
-    "qualif": "3",
-    "fonction": "Chauffeurs"
-  },
   {
     "matricule": "1761",
     "nom": "VRAY",
@@ -638,5 +611,23 @@ window.OUVRIERS = [
     "entree": "2026-02-16",
     "qualif": "2",
     "fonction": "Maçons"
+  }
+  {
+    "matricule": "1762",
+    "nom": "ANTONNEAU",
+    "prenom": "FANNY",
+    "naissance": "1993-03.04",
+    "entree": "2026-04-01",
+    "qualif": "2",
+    "fonction": "Chauffeur"
+  }
+    {
+    "matricule": "1763",
+    "nom": "ALYA",
+    "prenom": "MOHAREM",
+    "naissance": "2000-01.27",
+    "entree": "2026-04-13",
+    "qualif": "2",
+    "fonction": "Electromecanicien"
   }
 ];
