@@ -353,36 +353,30 @@ function afficherResultat(d) {
 /* ================== PDF (jsPDF) ================== */
 function buildPdfWithJsPDF(d) {
   const { jsPDF } = (window.jspdf || {});
-  if (!jsPDF) throw new Error("jsPDF introuvable – vérifie l’inclusion de la bibliothèque (jspdf.umd.min.js).");
+  if (!jsPDF) throw new Error("jsPDF introuvable – vérifie l’inclusion de la bibliothèque.");
 
-  const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true });
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true, putOnlyUsedFonts: true });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 36;
   let y = margin;
 
-  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(249,115,22);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(249, 115, 22);
   doc.text("LixStaff – Évaluation du personnel", margin, y);
   y += 24;
 
-  doc.setTextColor(0,0,0);
-  doc.setFont('helvetica','normal');
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-
-  const info = (label, val) => {
-    newPageIfNeeded(16);
-    doc.setFont('helvetica','bold'); doc.text(label + " ", margin, y);
-    const w = doc.getTextWidth(label + " ");
-    doc.setFont('helvetica','normal'); doc.text(String(val || ""), margin + w, y);
-    y += 16;
-  };
 
   info("N° de chantier + nom :", d.chantier);
   info("Ouvrier :", d.ouvrier);
   info("Métier :", d.metier);
   if (d.date_naissance) info("Date de naissance :", d.date_naissance);
-  if (d.qualification)  info("Qualification :", d.qualification);
-  if (d.date_entree)    info("Date d’entrée :", d.date_entree);
+  if (d.qualification) info("Qualification :", d.qualification);
+  if (d.date_entree) info("Date d’entrée :", d.date_entree);
   info("Date de l’évaluation :", d.date_eval);
   info("Initial de l’évaluateur :", d.initial_evaluateur);
   info("Évaluateur lu et approuvé :", d.approbateur);
@@ -391,68 +385,127 @@ function buildPdfWithJsPDF(d) {
   y += 8;
 
   section("Critères d’évaluation");
-  tableHeader(["Critère", "Appréciation", "Commentaire"], [360, 120, 150]);
+  tableHeader(["Critère", "Appréciation", "Commentaire"], [300, 100, 160]);
   d.evaluation.forEach(row => {
-    tableRow([String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")], [360, 120, 150]);
+    tableRow(
+      [String(row.critere || ""), String(row.note || ""), String(row.commentaire || "")],
+      [300, 100, 160]
+    );
   });
 
   if (d.commentaire) {
     section("Commentaire général");
-    y = multiText(d.commentaire || "", margin, y, pageW - margin*2) + 8;
+    multiText(d.commentaire || "", margin, y, pageW - margin * 2);
+    y += 8;
   }
 
   section("Complément d’évaluation");
-  y = multiText(
-    `• Fonctions exercées sur le chantier : ${d.fonctions || ""}\n` +
-    `• Aspirations : ${d.aspirations || ""}\n` +
-    `• Formations : ${d.formations || ""}\n` +
-    `• Objectifs : ${d.objectifs || ""}\n` +
-    `• Remarques : ${d.remarques || ""}\n` +
-    `• Accidents : ${d.accidents || ""}`,
-    margin, y, pageW - margin*2
-  );
+  multiText(`• Fonctions exercées sur le chantier : ${d.fonctions || ""}`, margin, y, pageW - margin * 2);
+  multiText(`• Aspirations : ${d.aspirations || ""}`, margin, y + 4, pageW - margin * 2);
+  multiText(`• Formations : ${d.formations || ""}`, margin, y + 4, pageW - margin * 2);
+  multiText(`• Objectifs : ${d.objectifs || ""}`, margin, y + 4, pageW - margin * 2);
+  multiText(`• Remarques : ${d.remarques || ""}`, margin, y + 4, pageW - margin * 2);
+  multiText(`• Accidents : ${d.accidents || ""}`, margin, y + 4, pageW - margin * 2);
 
   return doc;
 
-  function newPageIfNeeded(extra=0){
-    if (y + extra > pageH - margin){ doc.addPage(); y = margin; }
+  function info(label, val) {
+    newPageIfNeeded(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(label + " ", margin, y);
+    const w = doc.getTextWidth(label + " ");
+    doc.setFont("helvetica", "normal");
+    doc.text(String(val || ""), margin + w, y);
+    y += 16;
   }
-  function section(t){
+
+  function newPageIfNeeded(extra = 0) {
+    if (y + extra > pageH - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  }
+
+  function section(t) {
     newPageIfNeeded(24);
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(249,115,22);
-    doc.text(t, margin, y); y += 16;
-    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(0,0,0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(249, 115, 22);
+    doc.text(t, margin, y);
+    y += 16;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
   }
-  function tableHeader(cols, widths){
+
+  function tableHeader(cols, widths) {
     newPageIfNeeded(22);
     let x = margin;
-    doc.setFont('helvetica','bold');
-    cols.forEach((c,i)=>{ doc.text(c, x, y); x += widths[i]; });
-    y += 12; doc.setLineWidth(0.5);
-    doc.line(margin, y, margin + widths.reduce((a,b)=>a+b,0), y);
-    y += 6; doc.setFont('helvetica','normal');
-  }
-  function tableRow(cols, widths){
-    const rowH = 16; newPageIfNeeded(rowH + 6);
-    let x = margin;
-    cols.forEach((c,i)=>{
-      const w = widths[i];
-      const lines = doc.splitTextToSize(String(c||""), w-4);
-      let yy = y; lines.forEach(line=>{ doc.text(line, x, yy); yy += 12; });
-      x += w;
+    doc.setFont("helvetica", "bold");
+
+    cols.forEach((c, i) => {
+      doc.text(c, x, y);
+      x += widths[i];
     });
-    y += rowH; doc.setDrawColor(230); doc.setLineWidth(0.3);
-    doc.line(margin, y, margin + widths.reduce((a,b)=>a+b,0), y);
-    y += 6; doc.setDrawColor(0);
+
+    y += 12;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + widths.reduce((a, b) => a + b, 0), y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
   }
-  function multiText(text, x, yStart, width){
-    const lines = doc.splitTextToSize(String(text||""), width);
+
+  function tableRow(cols, widths) {
+    const lineHeight = 12;
+    const paddingBottom = 8;
+
+    const wrapped = cols.map((c, i) =>
+      doc.splitTextToSize(String(c || ""), widths[i] - 6)
+    );
+
+    const maxLines = Math.max(...wrapped.map(lines => lines.length));
+    const rowHeight = maxLines * lineHeight + paddingBottom;
+
+    newPageIfNeeded(rowHeight + 6);
+
+    let x = margin;
+    const startY = y;
+
+    wrapped.forEach((lines, i) => {
+      let yy = startY;
+      lines.forEach(line => {
+        doc.text(line, x, yy);
+        yy += lineHeight;
+      });
+      x += widths[i];
+    });
+
+    y += rowHeight;
+    doc.setDrawColor(230);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + widths.reduce((a, b) => a + b, 0), y);
+    y += 6;
+    doc.setDrawColor(0);
+  }
+
+  function multiText(text, x, yStart, width) {
+    const lines = doc.splitTextToSize(String(text || ""), width);
     let yy = yStart;
-    lines.forEach(line=>{ newPageIfNeeded(14); doc.text(line, x, yy); yy += 14; });
+
+    lines.forEach(line => {
+      if (yy + 14 > pageH - margin) {
+        doc.addPage();
+        yy = margin;
+      }
+
+      doc.text(line, x, yy);
+      yy += 14;
+    });
+
+    y = yy;
     return yy;
   }
 }
-
 /* ================== CONVERSION PDF → BASE64 ================== */
 function pdfBase64FromDoc(doc) {
   const buffer = doc.output('arraybuffer');
