@@ -621,7 +621,7 @@ window.OUVRIERS = [
     "qualif": "2",
     "fonction": "Chauffeurs"
   },
-  {
+   {
     "matricule": "1763",
     "nom": "ALYA",
     "prenom": "MOHAREM",
@@ -629,8 +629,8 @@ window.OUVRIERS = [
     "entree": "2026-04-13",
     "qualif": "2",
     "fonction": "Electromécaniciens"
-  }
-    {
+  },
+  {
     "matricule": "1728",
     "nom": "FRAIX",
     "prenom": "CHRISTOPHE",
