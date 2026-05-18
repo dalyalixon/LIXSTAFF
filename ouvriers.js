@@ -630,4 +630,13 @@ window.OUVRIERS = [
     "qualif": "2",
     "fonction": "Electromécaniciens"
   }
+    {
+    "matricule": "1728",
+    "nom": "FRAIX",
+    "prenom": "CHRISTOPHE",
+    "naissance": "1979-08-08",
+    "entree": "2023-08-21",
+    "qualif": "2",
+    "fonction": "Coffreurs"
+  }
 ];
