@@ -638,5 +638,23 @@ window.OUVRIERS = [
     "entree": "2023-08-21",
     "qualif": "2",
     "fonction": "Coffreurs"
+  },
+    {
+    "matricule": "1764",
+    "nom": "VANDEROOST",
+    "prenom": "ANTHONY",
+    "naissance": "1990-07-29",
+    "entree": "2026-04-20",
+    "qualif": "2",
+    "fonction": "Maçons"
+  },
+  {
+    "matricule": "1765",
+    "nom": "PORINEAU",
+    "prenom": "THOMAS",
+    "naissance": "1984-10-21",
+    "entree": "2026-04-20",
+    "qualif": "1",
+    "fonction": "Maçons"
   }
 ];
