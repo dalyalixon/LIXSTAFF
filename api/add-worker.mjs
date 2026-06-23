@@ -4,17 +4,16 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKERS_FILE = path.join(__dirname, '..', 'workers-extra.json');
+const DELETED_FILE = path.join(__dirname, '..', 'workers-deleted.json');
 
 const ADMIN_USERS = {
   'c.portella@lixon.net': 'Portella2024!',
   'b.potiaux@lixon.net':  'Potiaux2024!'
 };
 
-function readWorkers() {
+function readJSON(file) {
   try {
-    if (fs.existsSync(WORKERS_FILE)) {
-      return JSON.parse(fs.readFileSync(WORKERS_FILE, 'utf-8'));
-    }
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8'));
   } catch (e) {}
   return [];
 }
@@ -25,23 +24,14 @@ function checkAuth(username, password) {
 
 export function addWorkerHandler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const { username, password, worker } = req.body || {};
-
-  if (!checkAuth(username, password)) {
-    return res.status(401).json({ error: 'Non autorisé' });
-  }
-
-  if (!worker || !worker.matricule || !worker.nom || !worker.prenom || !worker.fonction) {
+  if (!checkAuth(username, password)) return res.status(401).json({ error: 'Non autorisé' });
+  if (!worker || !worker.matricule || !worker.nom || !worker.prenom || !worker.fonction)
     return res.status(400).json({ error: 'Champs obligatoires manquants (matricule, nom, prenom, fonction)' });
-  }
 
-  const workers = readWorkers();
-
-  const exists = workers.some(w => String(w.matricule) === String(worker.matricule));
-  if (exists) {
+  const workers = readJSON(WORKERS_FILE);
+  if (workers.some(w => String(w.matricule) === String(worker.matricule)))
     return res.status(409).json({ error: `Le matricule ${worker.matricule} existe déjà.` });
-  }
 
   workers.push({
     matricule: String(worker.matricule).trim(),
@@ -52,31 +42,45 @@ export function addWorkerHandler(req, res) {
     qualif:    String(worker.qualif || '').trim(),
     fonction:  String(worker.fonction).trim()
   });
-
   fs.writeFileSync(WORKERS_FILE, JSON.stringify(workers, null, 2), 'utf-8');
   res.status(200).json({ success: true, total: workers.length });
 }
 
 export function deleteWorkerHandler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const { username, password, matricule } = req.body || {};
+  if (!checkAuth(username, password)) return res.status(401).json({ error: 'Non autorisé' });
+  if (!matricule) return res.status(400).json({ error: 'Matricule manquant' });
 
-  if (!checkAuth(username, password)) {
-    return res.status(401).json({ error: 'Non autorisé' });
-  }
-
-  if (!matricule) {
-    return res.status(400).json({ error: 'Matricule manquant' });
-  }
-
-  const workers = readWorkers();
+  const workers = readJSON(WORKERS_FILE);
   const filtered = workers.filter(w => String(w.matricule) !== String(matricule));
-
-  if (filtered.length === workers.length) {
-    return res.status(404).json({ error: `Matricule ${matricule} introuvable.` });
-  }
+  if (filtered.length === workers.length) return res.status(404).json({ error: `Matricule ${matricule} introuvable.` });
 
   fs.writeFileSync(WORKERS_FILE, JSON.stringify(filtered, null, 2), 'utf-8');
   res.status(200).json({ success: true, total: filtered.length });
+}
+
+export function hideWorkerHandler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { username, password, matricule } = req.body || {};
+  if (!checkAuth(username, password)) return res.status(401).json({ error: 'Non autorisé' });
+  if (!matricule) return res.status(400).json({ error: 'Matricule manquant' });
+
+  const deleted = readJSON(DELETED_FILE);
+  if (!deleted.includes(String(matricule))) {
+    deleted.push(String(matricule));
+    fs.writeFileSync(DELETED_FILE, JSON.stringify(deleted, null, 2), 'utf-8');
+  }
+  res.status(200).json({ success: true });
+}
+
+export function restoreWorkerHandler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { username, password, matricule } = req.body || {};
+  if (!checkAuth(username, password)) return res.status(401).json({ error: 'Non autorisé' });
+  if (!matricule) return res.status(400).json({ error: 'Matricule manquant' });
+
+  const deleted = readJSON(DELETED_FILE);
+  fs.writeFileSync(DELETED_FILE, JSON.stringify(deleted.filter(m => m !== String(matricule)), null, 2), 'utf-8');
+  res.status(200).json({ success: true });
 }
