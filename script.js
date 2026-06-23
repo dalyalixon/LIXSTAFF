@@ -14,7 +14,7 @@ const ficheComplementaire = document.getElementById("ficheComplementaire");
 const resultatDiv         = document.getElementById("resultat");
 const btnDownload         = document.getElementById("btnDownload");
 
-/* Champs d’identification */
+/* Champs d'identification */
 const champChantier   = document.getElementById("chantier");
 const selectOuvrier   = document.getElementById("ouvrierSelect");
 const inputNaissance  = document.getElementById("dateNaissance");
@@ -37,24 +37,34 @@ let OUVRIERS = [];
 async function chargerOuvriers() {
   if (Array.isArray(window.OUVRIERS) && window.OUVRIERS.length) {
     OUVRIERS = window.OUVRIERS;
-    remplirSelectOuvriers(OUVRIERS);
-    return;
-  }
-  try {
-    const res = await fetch("/ouvriers.json", { cache: "no-store" });
-    if (res.ok) {
-      OUVRIERS = await res.json();
-      remplirSelectOuvriers(OUVRIERS);
-      return;
+  } else {
+    try {
+      const res = await fetch("/ouvriers.json", { cache: "no-store" });
+      if (res.ok) {
+        OUVRIERS = await res.json();
+      }
+    } catch (e) {
+      console.error("Chargement de /ouvriers.json échoué:", e);
     }
-  } catch (e) {
-    console.error("Chargement de /ouvriers.json échoué:", e);
+    if (!OUVRIERS.length) {
+      OUVRIERS = [
+        { matricule: "TEST1", nom: "DUPONT", prenom: "JEAN", naissance:"", entree: "2020-01-01", qualif: "4", fonction: "Maçons" },
+        { matricule: "TEST2", nom: "MARTIN", prenom: "PAUL", naissance:"", entree: "2019-03-12", qualif: "7", fonction: "Coffreurs" }
+      ];
+    }
   }
-  // Fallback minimal si rien n'est dispo
-  OUVRIERS = [
-    { matricule: "TEST1", nom: "DUPONT", prenom: "JEAN", naissance:"", entree: "2020-01-01", qualif: "4", fonction: "Maçons" },
-    { matricule: "TEST2", nom: "MARTIN", prenom: "PAUL", naissance:"", entree: "2019-03-12", qualif: "7", fonction: "Coffreurs" }
-  ];
+
+  // Fusionner les ouvriers ajoutés via la page admin
+  try {
+    const extra = await fetch("/workers-extra.json", { cache: "no-store" });
+    if (extra.ok) {
+      const extraData = await extra.json();
+      if (Array.isArray(extraData) && extraData.length) {
+        OUVRIERS = [...OUVRIERS, ...extraData];
+      }
+    }
+  } catch (_) {}
+
   remplirSelectOuvriers(OUVRIERS);
 }
 
@@ -193,7 +203,7 @@ const luEvalue = document.getElementById("luEvalue")
  // Champs vraiment obligatoires
 // Champs vraiment obligatoires
 if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval) {
-  alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d’évaluation, Initial de l’évaluateur et cocher la validation de l’évaluateur.");
+  alert("❌ Merci de remplir : N° de chantier, Ouvrier, Métier, Date d'évaluation, Initial de l'évaluateur et cocher la validation de l'évaluateur.");
   return;
 }
 
@@ -311,7 +321,7 @@ if (!chantier || !ouvrierId || !metier || !dateEval || !initialEval || !luEval) 
     alert("✅ Évaluation envoyée par e-mail avec le PDF en pièce jointe !");
   } catch (err) {
     console.error(err);
-    alert("❌ Impossible de générer ou d’envoyer le PDF.");
+    alert("❌ Impossible de générer ou d'envoyer le PDF.");
   }
 });
 
@@ -323,9 +333,9 @@ function afficherResultat(d) {
   html += `<strong>Métier :</strong> ${escapeHtml(d.metier)}<br>`;
   if (d.date_naissance) html += `<strong>Date de naissance :</strong> ${escapeHtml(d.date_naissance)}<br>`;
   if (d.qualification)  html += `<strong>Qualification :</strong> ${escapeHtml(d.qualification)}<br>`;
-  if (d.date_entree)    html += `<strong>Date d’entrée :</strong> ${escapeHtml(d.date_entree)}<br>`;
-  html += `<strong>Date de l’évaluation :</strong> ${escapeHtml(d.date_eval)}<br>`;
-  html += `<strong>Initial de l’évaluateur :</strong> ${escapeHtml(d.initial_evaluateur)}<br><br>`;
+  if (d.date_entree)    html += `<strong>Date d'entrée :</strong> ${escapeHtml(d.date_entree)}<br>`;
+  html += `<strong>Date de l'évaluation :</strong> ${escapeHtml(d.date_eval)}<br>`;
+  html += `<strong>Initial de l'évaluateur :</strong> ${escapeHtml(d.initial_evaluateur)}<br><br>`;
 
   html += `<strong>Critères :</strong><br>`;
   d.evaluation.forEach(row => {
@@ -353,7 +363,7 @@ function afficherResultat(d) {
 /* ================== PDF (jsPDF) ================== */
 function buildPdfWithJsPDF(d) {
   const { jsPDF } = (window.jspdf || {});
-  if (!jsPDF) throw new Error("jsPDF introuvable – vérifie l’inclusion de la bibliothèque.");
+  if (!jsPDF) throw new Error("jsPDF introuvable – vérifie l'inclusion de la bibliothèque.");
 
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true, putOnlyUsedFonts: true });
   const pageW = doc.internal.pageSize.getWidth();
@@ -376,15 +386,15 @@ function buildPdfWithJsPDF(d) {
   info("Métier :", d.metier);
   if (d.date_naissance) info("Date de naissance :", d.date_naissance);
   if (d.qualification) info("Qualification :", d.qualification);
-  if (d.date_entree) info("Date d’entrée :", d.date_entree);
-  info("Date de l’évaluation :", d.date_eval);
-  info("Initial de l’évaluateur :", d.initial_evaluateur);
+  if (d.date_entree) info("Date d'entrée :", d.date_entree);
+  info("Date de l'évaluation :", d.date_eval);
+  info("Initial de l'évaluateur :", d.initial_evaluateur);
   info("Évaluateur lu et approuvé :", d.approbateur);
   info("Évalué lu et approuvé :", d.evalue);
 
   y += 8;
 
-  section("Critères d’évaluation");
+  section("Critères d'évaluation");
   tableHeader(["Critère", "Appréciation", "Commentaire"], [300, 100, 160]);
   d.evaluation.forEach(row => {
     tableRow(
@@ -399,7 +409,7 @@ function buildPdfWithJsPDF(d) {
     y += 8;
   }
 
-  section("Complément d’évaluation");
+  section("Complément d'évaluation");
   multiText(`• Fonctions exercées sur le chantier : ${d.fonctions || ""}`, margin, y, pageW - margin * 2);
   multiText(`• Aspirations : ${d.aspirations || ""}`, margin, y + 4, pageW - margin * 2);
   multiText(`• Formations : ${d.formations || ""}`, margin, y + 4, pageW - margin * 2);
@@ -506,6 +516,7 @@ function buildPdfWithJsPDF(d) {
     return yy;
   }
 }
+
 /* ================== CONVERSION PDF → BASE64 ================== */
 function pdfBase64FromDoc(doc) {
   const buffer = doc.output('arraybuffer');
@@ -584,7 +595,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Charger la liste des ouvriers
   chargerOuvriers();
 
-  // Mettre automatiquement la date du jour dans "Date de l’évaluation"
+  // Mettre automatiquement la date du jour dans "Date de l'évaluation"
   const today = new Date().toISOString().slice(0, 10);
   if (inputDateEval && !inputDateEval.value) {
     inputDateEval.value = today;
