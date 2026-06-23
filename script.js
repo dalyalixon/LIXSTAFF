@@ -40,12 +40,8 @@ async function chargerOuvriers() {
   } else {
     try {
       const res = await fetch("/ouvriers.json", { cache: "no-store" });
-      if (res.ok) {
-        OUVRIERS = await res.json();
-      }
-    } catch (e) {
-      console.error("Chargement de /ouvriers.json échoué:", e);
-    }
+      if (res.ok) { OUVRIERS = await res.json(); }
+    } catch (e) { console.error("Chargement de /ouvriers.json échoué:", e); }
     if (!OUVRIERS.length) {
       OUVRIERS = [
         { matricule: "TEST1", nom: "DUPONT", prenom: "JEAN", naissance:"", entree: "2020-01-01", qualif: "4", fonction: "Maçons" },
@@ -53,18 +49,14 @@ async function chargerOuvriers() {
       ];
     }
   }
-
-  // Fusionner les ouvriers ajoutés via la page admin
   try {
     const extra = await fetch("/workers-extra.json", { cache: "no-store" });
-    if (extra.ok) {
-      const extraData = await extra.json();
-      if (Array.isArray(extraData) && extraData.length) {
-        OUVRIERS = [...OUVRIERS, ...extraData];
-      }
-    }
+    if (extra.ok) { const d = await extra.json(); if (Array.isArray(d) && d.length) OUVRIERS = [...OUVRIERS, ...d]; }
   } catch (_) {}
-
+  try {
+    const del = await fetch("/workers-deleted.json", { cache: "no-store" });
+    if (del.ok) { const d = await del.json(); if (Array.isArray(d) && d.length) OUVRIERS = OUVRIERS.filter(o => !d.includes(String(o.matricule))); }
+  } catch (_) {}
   remplirSelectOuvriers(OUVRIERS);
 }
 
