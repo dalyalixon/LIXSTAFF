@@ -1,1 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LixStaff – Admin</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .hidden { display: none !important; }
+    #msgOk  { color: #16a34a; font-weight: bold; margin-top: 12px; }
+    #msgErr { color: #dc2626; font-weight: bold; margin-top: 12px; }
+    .logout-btn {
+      background: none;
+      border: 1px solid #ccc;
+      color: #555;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      float: right;
+    }
+    .logout-btn:hover { background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LixStaff – Administration</h1>
+  </header>
 
+  <div class="container">
+
+    <!-- ===== CONNEXION ===== -->
+    <div class="card" id="loginCard">
+      <h2>Connexion admin</h2>
+      <form id="loginForm">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="votre@email.com" required />
+
+        <label>Mot de passe</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required />
+
+        <button type="submit">Se connecter</button>
+        <div id="loginErr" style="color:#dc2626;margin-top:10px;"></div>
+      </form>
+    </div>
+
+    <!-- ===== FORMULAIRE AJOUT OUVRIER ===== -->
+    <div class="card hidden" id="adminCard">
+      <h2>
+        Ajouter un ouvrier
+        <button class="logout-btn" id="btnLogout">Déconnexion</button>
+      </h2>
+
+      <form id="addWorkerForm">
+        <div class="flex-row">
+          <div class="flex-col">
+            <label>Matricule *</label>
+            <input type="text" id="wMatricule" placeholder="Ex: 850" required />
+          </div>
+          <div class="flex-col">
+            <label>Qualification (1-9 ou 99)</label>
+            <input type="number" id="wQualif" placeholder="Ex: 4" min="1" max="99" />
+          </div>
+        </div>
+
+        <div class="flex-row">
+          <div class="flex-col">
+            <label>Nom *</label>
+            <input type="text" id="wNom" placeholder="DUPONT" required />
+          </div>
+          <div class="flex-col">
+            <label>Prénom *</label>
+            <input type="text" id="wPrenom" placeholder="Jean" required />
+          </div>
+        </div>
+
+        <div class="flex-row">
+          <div class="flex-col">
+            <label>Date de naissance</label>
+            <input type="date" id="wNaissance" />
+          </div>
+          <div class="flex-col">
+            <label>Date d'entrée</label>
+            <input type="date" id="wEntree" />
+          </div>
+        </div>
+
+        <label>Fonction / Métier *</label>
+        <select id="wFonction" required>
+          <option value="">-- Choisir --</option>
+          <option value="Ouvrier Polyvalent">Ouvrier Polyvalent</option>
+          <option value="Coffreur/Ferrailleur">Coffreur/Ferrailleur</option>
+          <option value="Électricien">Électricien</option>
+          <option value="Grutier">Grutier</option>
+          <option value="Maçon">Maçon</option>
+          <option value="Manœuvre">Manœuvre</option>
+          <option value="Opérateur de cour">Opérateur de cour</option>
+          <option value="Soudeur">Soudeur</option>
+        </select>
+
+        <button type="submit">Ajouter l'ouvrier</button>
+        <div id="msgOk" class="hidden"></div>
+        <div id="msgErr" class="hidden"></div>
+      </form>
+
+      <div id="addedList" class="hidden" style="margin-top:24px;">
+        <h3 style="color:#f97316">Ouvriers ajoutés</h3>
+        <ul id="addedUl" style="padding-left:1.2em;line-height:1.8;"></ul>
+      </div>
+    </div>
+
+    <p style="text-align:center;margin-top:1em;">
+      <a href="/" style="color:#f97316">← Retour à l'accueil</a>
+    </p>
+  </div>
+
+  <script>
+    const SESSION_KEY = 'lixstaff_admin';
+    let session = null;
+
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) session = JSON.parse(saved);
+    } catch (_) {}
+
+    if (session) showAdminPanel();
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      document.getElementById('loginErr').textContent = '';
+
+      const res = await fetch('/api/add-worker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, worker: null })
+      });
+
+      if (res.status === 401) {
+        document.getElementById('loginErr').textContent = 'Email ou mot de passe incorrect.';
+        return;
+      }
+
+      session = { username, password };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      showAdminPanel();
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      session = null;
+      sessionStorage.removeItem(SESSION_KEY);
+      document.getElementById('loginCard').classList.remove('hidden');
+      document.getElementById('adminCard').classList.add('hidden');
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginPassword').value = '';
+    });
+
+    document.getElementById('addWorkerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgOk  = document.getElementById('msgOk');
+      const msgErr = document.getElementById('msgErr');
+      msgOk.classList.add('hidden');
+      msgErr.classList.add('hidden');
+
+      const worker = {
+        matricule: document.getElementById('wMatricule').value.trim(),
+        nom:       document.getElementById('wNom').value.trim(),
+        prenom:    document.getElementById('wPrenom').value.trim(),
+        naissance: document.getElementById('wNaissance').value,
+        entree:    document.getElementById('wEntree').value,
+        qualif:    document.getElementById('wQualif').value.trim(),
+        fonction:  document.getElementById('wFonction').value
+      };
+
+      const res = await fetch('/api/add-worker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: session.username, password: session.password, worker })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        msgOk.textContent = `✅ ${worker.nom} ${worker.prenom} (Mat. ${worker.matricule}) ajouté avec succès !`;
+        msgOk.classList.remove('hidden');
+        addToList(worker);
+        document.getElementById('addWorkerForm').reset();
+      } else {
+        msgErr.textContent = `❌ ${data.error || 'Erreur inconnue'}`;
+        msgErr.classList.remove('hidden');
+      }
+    });
+
+    function showAdminPanel() {
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('adminCard').classList.remove('hidden');
+    }
+
+    function addToList(w) {
+      const listDiv = document.getElementById('addedList');
+      const ul = document.getElementById('addedUl');
+      listDiv.classList.remove('hidden');
+      const li = document.createElement('li');
+      li.textContent = `${w.nom} ${w.prenom} — Mat. ${w.matricule} — ${w.fonction}`;
+      ul.appendChild(li);
+    }
+  </script>
+</body>
+</html>
