@@ -5,108 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LixStaff – Admin</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="ouvriers.js"></script>
   <style>
     .hidden { display: none !important; }
     #msgOk  { color: #16a34a; font-weight: bold; margin-top: 12px; }
     #msgErr { color: #dc2626; font-weight: bold; margin-top: 12px; }
-    .logout-btn {
-      background: none;
-      border: 1px solid #ccc;
-      color: #555;
-      padding: 6px 14px;
-      font-size: 0.85rem;
-      float: right;
-    }
+    .logout-btn { background: none; border: 1px solid #ccc; color: #555; padding: 6px 14px; font-size: 0.85rem; float: right; }
     .logout-btn:hover { background: #f3f4f6; }
-    .worker-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      background: #fafafa;
-    }
-    .worker-row span { font-size: 0.95rem; }
-    .btn-delete {
-      background: #dc2626;
-      color: white;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
+    .worker-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; background: #fafafa; }
+    .worker-row.deleted { background: #fef2f2; border-color: #fecaca; opacity: 0.7; }
+    .worker-row span { font-size: 0.9rem; }
+    .btn-delete { background: #dc2626; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.82rem; white-space: nowrap; }
     .btn-delete:hover { background: #b91c1c; }
+    .btn-restore { background: #16a34a; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.82rem; white-space: nowrap; }
+    .btn-restore:hover { background: #15803d; }
+    #searchInput { width: 100%; padding: 10px 12px; margin-bottom: 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+    .list-info { color: #9ca3af; font-size: 0.85rem; margin-bottom: 10px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab { padding: 6px 16px; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; font-size: 0.9rem; background: #f9fafb; }
+    .tab.active { background: #f97316; color: white; border-color: #f97316; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>LixStaff – Administration</h1>
-  </header>
-
+  <header><h1>LixStaff – Administration</h1></header>
   <div class="container">
 
-    <!-- ===== CONNEXION ===== -->
     <div class="card" id="loginCard">
       <h2>Connexion admin</h2>
       <form id="loginForm">
         <label>Email</label>
         <input type="email" id="loginEmail" placeholder="votre@email.com" required />
-
         <label>Mot de passe</label>
         <input type="password" id="loginPassword" placeholder="••••••••" required />
-
         <button type="submit">Se connecter</button>
         <div id="loginErr" style="color:#dc2626;margin-top:10px;"></div>
       </form>
     </div>
 
-    <!-- ===== PANNEAU ADMIN ===== -->
     <div class="hidden" id="adminCard">
-
-      <!-- AJOUTER -->
       <div class="card">
-        <h2>
-          Ajouter un ouvrier
-          <button class="logout-btn" id="btnLogout">Déconnexion</button>
-        </h2>
-
+        <h2>Ajouter un ouvrier <button class="logout-btn" id="btnLogout">Déconnexion</button></h2>
         <form id="addWorkerForm">
           <div class="flex-row">
-            <div class="flex-col">
-              <label>Matricule *</label>
-              <input type="text" id="wMatricule" placeholder="Ex: 850" required />
-            </div>
-            <div class="flex-col">
-              <label>Qualification (1-9 ou 99)</label>
-              <input type="number" id="wQualif" placeholder="Ex: 4" min="1" max="99" />
-            </div>
+            <div class="flex-col"><label>Matricule *</label><input type="text" id="wMatricule" placeholder="Ex: 850" required /></div>
+            <div class="flex-col"><label>Qualification (1-9 ou 99)</label><input type="number" id="wQualif" placeholder="Ex: 4" min="1" max="99" /></div>
           </div>
-
           <div class="flex-row">
-            <div class="flex-col">
-              <label>Nom *</label>
-              <input type="text" id="wNom" placeholder="DUPONT" required />
-            </div>
-            <div class="flex-col">
-              <label>Prénom *</label>
-              <input type="text" id="wPrenom" placeholder="Jean" required />
-            </div>
+            <div class="flex-col"><label>Nom *</label><input type="text" id="wNom" placeholder="DUPONT" required /></div>
+            <div class="flex-col"><label>Prénom *</label><input type="text" id="wPrenom" placeholder="Jean" required /></div>
           </div>
-
           <div class="flex-row">
-            <div class="flex-col">
-              <label>Date de naissance</label>
-              <input type="date" id="wNaissance" />
-            </div>
-            <div class="flex-col">
-              <label>Date d'entrée</label>
-              <input type="date" id="wEntree" />
-            </div>
+            <div class="flex-col"><label>Date de naissance</label><input type="date" id="wNaissance" /></div>
+            <div class="flex-col"><label>Date d'entrée</label><input type="date" id="wEntree" /></div>
           </div>
-
           <label>Fonction / Métier *</label>
           <select id="wFonction" required>
             <option value="">-- Choisir --</option>
@@ -119,35 +70,32 @@
             <option value="Opérateur de cour">Opérateur de cour</option>
             <option value="Soudeur">Soudeur</option>
           </select>
-
           <button type="submit">Ajouter l'ouvrier</button>
           <div id="msgOk" class="hidden"></div>
           <div id="msgErr" class="hidden"></div>
         </form>
       </div>
 
-      <!-- LISTE / SUPPRIMER -->
-      <div class="card" id="listCard">
-        <h2>Ouvriers ajoutés</h2>
-        <div id="workersList"><em style="color:#9ca3af">Chargement…</em></div>
+      <div class="card">
+        <h2>Gérer les ouvriers</h2>
+        <div class="tabs">
+          <button class="tab active" id="tabActifs" onclick="setTab('actifs')">Actifs</button>
+          <button class="tab" id="tabSupprimes" onclick="setTab('supprimes')">Supprimés</button>
+        </div>
+        <input type="text" id="searchInput" placeholder="Rechercher par nom, prénom ou matricule…" oninput="filtrerListe()" />
+        <div class="list-info" id="listInfo"></div>
+        <div id="workersList"></div>
       </div>
-
     </div>
 
-    <p style="text-align:center;margin-top:1em;">
-      <a href="/" style="color:#f97316">← Retour à l'accueil</a>
-    </p>
+    <p style="text-align:center;margin-top:1em;"><a href="/" style="color:#f97316">← Retour à l'accueil</a></p>
   </div>
 
   <script>
     const SESSION_KEY = 'lixstaff_admin';
-    let session = null;
+    let session = null, tousOuvriers = [], deletedMatricules = [], onglet = 'actifs';
 
-    try {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) session = JSON.parse(saved);
-    } catch (_) {}
-
+    try { const s = sessionStorage.getItem(SESSION_KEY); if (s) session = JSON.parse(s); } catch (_) {}
     if (session) showAdminPanel();
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -155,26 +103,15 @@
       const username = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       document.getElementById('loginErr').textContent = '';
-
-      const res = await fetch('/api/add-worker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, worker: null })
-      });
-
-      if (res.status === 401) {
-        document.getElementById('loginErr').textContent = 'Email ou mot de passe incorrect.';
-        return;
-      }
-
+      const res = await fetch('/api/add-worker', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, worker: null }) });
+      if (res.status === 401) { document.getElementById('loginErr').textContent = 'Email ou mot de passe incorrect.'; return; }
       session = { username, password };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
       showAdminPanel();
     });
 
     document.getElementById('btnLogout').addEventListener('click', () => {
-      session = null;
-      sessionStorage.removeItem(SESSION_KEY);
+      session = null; sessionStorage.removeItem(SESSION_KEY);
       document.getElementById('loginCard').classList.remove('hidden');
       document.getElementById('adminCard').classList.add('hidden');
       document.getElementById('loginEmail').value = '';
@@ -183,11 +120,8 @@
 
     document.getElementById('addWorkerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const msgOk  = document.getElementById('msgOk');
-      const msgErr = document.getElementById('msgErr');
-      msgOk.classList.add('hidden');
-      msgErr.classList.add('hidden');
-
+      const msgOk = document.getElementById('msgOk'), msgErr = document.getElementById('msgErr');
+      msgOk.classList.add('hidden'); msgErr.classList.add('hidden');
       const worker = {
         matricule: document.getElementById('wMatricule').value.trim(),
         nom:       document.getElementById('wNom').value.trim(),
@@ -197,69 +131,65 @@
         qualif:    document.getElementById('wQualif').value.trim(),
         fonction:  document.getElementById('wFonction').value
       };
-
-      const res = await fetch('/api/add-worker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: session.username, password: session.password, worker })
-      });
-
+      const res = await fetch('/api/add-worker', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: session.username, password: session.password, worker }) });
       const data = await res.json();
-
-      if (res.ok) {
-        msgOk.textContent = `✅ ${worker.nom} ${worker.prenom} (Mat. ${worker.matricule}) ajouté avec succès !`;
-        msgOk.classList.remove('hidden');
-        document.getElementById('addWorkerForm').reset();
-        chargerListe();
-      } else {
-        msgErr.textContent = `❌ ${data.error || 'Erreur inconnue'}`;
-        msgErr.classList.remove('hidden');
-      }
+      if (res.ok) { msgOk.textContent = `✅ ${worker.nom} ${worker.prenom} (Mat. ${worker.matricule}) ajouté !`; msgOk.classList.remove('hidden'); document.getElementById('addWorkerForm').reset(); await chargerListe(); }
+      else { msgErr.textContent = `❌ ${data.error || 'Erreur inconnue'}`; msgErr.classList.remove('hidden'); }
     });
 
     async function supprimerOuvrier(matricule, nom) {
-      if (!confirm(`Supprimer ${nom} (Mat. ${matricule}) ?`)) return;
+      if (!confirm(`Masquer ${nom} (Mat. ${matricule}) des évaluations ?`)) return;
+      const res = await fetch('/api/hide-worker', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: session.username, password: session.password, matricule }) });
+      if (res.ok) await chargerListe(); else { const d = await res.json(); alert(`❌ ${d.error}`); }
+    }
 
-      const res = await fetch('/api/delete-worker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: session.username, password: session.password, matricule })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        chargerListe();
-      } else {
-        alert(`❌ ${data.error || 'Erreur inconnue'}`);
-      }
+    async function restaurerOuvrier(matricule, nom) {
+      if (!confirm(`Restaurer ${nom} (Mat. ${matricule}) ?`)) return;
+      const res = await fetch('/api/restore-worker', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: session.username, password: session.password, matricule }) });
+      if (res.ok) await chargerListe(); else { const d = await res.json(); alert(`❌ ${d.error}`); }
     }
 
     async function chargerListe() {
-      const div = document.getElementById('workersList');
-      try {
-        const res = await fetch('/workers-extra.json', { cache: 'no-store' });
-        const workers = await res.json();
-
-        if (!workers.length) {
-          div.innerHTML = '<em style="color:#9ca3af">Aucun ouvrier ajouté pour l\'instant.</em>';
-          return;
-        }
-
-        div.innerHTML = workers.map(w => `
-          <div class="worker-row">
-            <span><strong>${w.nom} ${w.prenom}</strong> — Mat. ${w.matricule} — ${w.fonction}</span>
-            <button class="btn-delete" onclick="supprimerOuvrier('${w.matricule}', '${w.nom} ${w.prenom}')">Supprimer</button>
-          </div>
-        `).join('');
-      } catch (_) {
-        div.innerHTML = '<em style="color:#dc2626">Erreur de chargement.</em>';
-      }
+      let base = Array.isArray(window.OUVRIERS) ? [...window.OUVRIERS] : [];
+      try { const r = await fetch('/workers-extra.json', { cache: 'no-store' }); if (r.ok) { const e = await r.json(); if (Array.isArray(e)) base = [...base, ...e]; } } catch (_) {}
+      try { const r = await fetch('/workers-deleted.json', { cache: 'no-store' }); if (r.ok) deletedMatricules = await r.json(); } catch (_) { deletedMatricules = []; }
+      tousOuvriers = base;
+      filtrerListe();
     }
 
-    function showAdminPanel() {
+    function filtrerListe() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const div = document.getElementById('workersList');
+      const liste = tousOuvriers.filter(w => {
+        const del = deletedMatricules.includes(String(w.matricule));
+        if (onglet === 'actifs' && del) return false;
+        if (onglet === 'supprimes' && !del) return false;
+        if (!q) return true;
+        return (w.nom||'').toLowerCase().includes(q) || (w.prenom||'').toLowerCase().includes(q) || String(w.matricule).includes(q);
+      });
+      document.getElementById('listInfo').textContent = `${liste.length} ouvrier(s) affiché(s)`;
+      if (!liste.length) { div.innerHTML = '<em style="color:#9ca3af">Aucun résultat.</em>'; return; }
+      div.innerHTML = liste.map(w => {
+        const del = deletedMatricules.includes(String(w.matricule));
+        const nom = `${w.nom} ${w.prenom}`;
+        const btn = del
+          ? `<button class="btn-restore" onclick="restaurerOuvrier('${w.matricule}','${nom.replace(/'/g,"\\'")}')">Restaurer</button>`
+          : `<button class="btn-delete" onclick="supprimerOuvrier('${w.matricule}','${nom.replace(/'/g,"\\'")}')">Supprimer</button>`;
+        return `<div class="worker-row ${del?'deleted':''}"><span><strong>${w.nom} ${w.prenom}</strong> — Mat. ${w.matricule} — ${w.fonction||''}</span>${btn}</div>`;
+      }).join('');
+    }
+
+    function setTab(t) {
+      onglet = t;
+      document.getElementById('tabActifs').classList.toggle('active', t === 'actifs');
+      document.getElementById('tabSupprimes').classList.toggle('active', t === 'supprimes');
+      filtrerListe();
+    }
+
+    async function showAdminPanel() {
       document.getElementById('loginCard').classList.add('hidden');
       document.getElementById('adminCard').classList.remove('hidden');
-      chargerListe();
+      await chargerListe();
     }
   </script>
 </body>
